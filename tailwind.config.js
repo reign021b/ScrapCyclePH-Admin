@@ -12,6 +12,14 @@ module.exports = {
         "gradient-conic":
           "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
       },
+      maxHeight: {
+        "screen-sidebar": "calc(100vh - 174px)",
+        // Add more as needed
+      },
+      height: {
+        "screen-sidebar": "calc(100vh - 174px)",
+        // Add more as needed
+      },
     },
   },
   plugins: [],
