@@ -9,7 +9,7 @@ export default function Home() {
       {/* app bar */}
       <div className="flex items-center w-screen px-4 bg-white">
         <div className="mr-auto">
-          <Image src={`/scrapcycle-logo.png`} width={230} height={50}></Image>
+          <Image src={`/scrapcycle-logo.png`} width={230} height={50} alt="ScrapCycle Logo"></Image>
         </div>
         <p className="font-semibold">Genevieve Navales (Admin 1)</p>
         <Image
@@ -19,6 +19,7 @@ export default function Home() {
           height={44}
           width={44}
           className="rounded-full ml-4 mr-3"
+          alt=""
         />
         <button className="w-11 h-11 rounded-full text-2xl flex items-center justify-center transition-all duration-300 bg-gray-100 hover:bg-green-50 border border-gray-300 hover:border-green-500 hover:text-green-600">
           <HiOutlineLogout />
@@ -93,6 +94,7 @@ export default function Home() {
                   src={`https://i.pinimg.com/564x/ef/80/97/ef8097fe4ac4fc38e5c12f1447b76f01.jpg`}
                   width={70}
                   height={70}
+                  alt=""
                   className="rounded-md mr-2"
                 />
                 <div className="flex-col flex-grow">

@@ -22,13 +22,14 @@ export default function Home() {
       {/* app bar */}
       <div className="flex items-center w-screen px-4 bg-white">
         <div className="mr-auto">
-          <Image src={`/scrapcycle-logo.png`} width={230} height={50}></Image>
+          <Image src={`/scrapcycle-logo.png`} alt="Scrapcycle logo" width={230} height={50} />
         </div>
         <p className="font-semibold">Genevieve Navales (Admin 1)</p>
         <Image
           src={
             "https://i.pinimg.com/564x/5b/01/dd/5b01dd38126870d000aee1ed5c8daa80.jpg"
           }
+          alt=""
           height={44}
           width={44}
           className="rounded-full ml-4 mr-3"
