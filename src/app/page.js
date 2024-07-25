@@ -1,6 +1,10 @@
 "use client";
 
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/utils/supabase/client';
 import Image from "next/image";
+import LogoutButton from './components/Auth/LogoutButton';
 
 // icons
 import { HiOutlineLogout } from "react-icons/hi";
@@ -17,6 +21,27 @@ import UnpaidCollector from "./components/unpaid-collector";
 import Map from "./components/map";
 
 export default function Home() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (!session) {
+        router.push('/login');
+      } else {
+        setLoading(false);
+      }
+    };
+
+    checkUser();
+  }, [router]);
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <main className="flex h-screen overflow-y-clip flex-col items-center text-slate-600 overflow-x-hidden">
       {/* app bar */}
@@ -34,9 +59,7 @@ export default function Home() {
           width={44}
           className="rounded-full ml-4 mr-3"
         />
-        <button className="w-11 h-11 rounded-full text-2xl flex items-center justify-center transition-all duration-300 bg-gray-100 hover:bg-green-50 border border-gray-300 hover:border-green-500 hover:text-green-600">
-          <HiOutlineLogout />
-        </button>
+        <LogoutButton className="bg-gray-100 hover:bg-green-50 border border-gray-300 hover:border-green-500 hover:text-green-600" />
       </div>
 
       {/* stats bar */}

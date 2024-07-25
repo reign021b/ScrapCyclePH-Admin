@@ -8,6 +8,7 @@ const ActiveCollector = () => {
     <button className="border p-5 mb-4 rounded-md transition duration-100 hover:bg-gray-50 w-full text-left">
       <div className="flex mb-3">
         <Image
+          alt=""
           src={`https://i.pinimg.com/564x/ef/80/97/ef8097fe4ac4fc38e5c12f1447b76f01.jpg`}
           width={70}
           height={70}
