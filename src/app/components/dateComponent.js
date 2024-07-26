@@ -1,7 +1,33 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { BsCalendar2WeekFill } from 'react-icons/bs';
 
 const DateComponent = () => {
+  const dateInputRef = useRef(null);
+  const [displayDate, setDisplayDate] = useState(() => {
+    const today = new Date();
+    return today.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      weekday: 'short',
+    });
+  });
+
+  const handleButtonClick = () => {
+    if (dateInputRef.current) {
+      dateInputRef.current.showPicker();
+    }
+  };
+
+  const handleDateChange = (e) => {
+    const date = new Date(e.target.value);
+    const formattedDate = date.toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      weekday: 'short',
+    });
+    setDisplayDate(formattedDate);
+  };
+
   return (
     <div className="pr-4 flex items-center min-w-96 border-r py-3">
       <div className="px-3 py-1 flex items-center mr-2 rounded-full border font-bold text-green-600 border-green-500 bg-green-50">
@@ -11,10 +37,19 @@ const DateComponent = () => {
         </div>
         <p>TODAY</p>
       </div>
-      <p className="mr-auto">February 6, Wed</p>
-      <button className="p-2 rounded-full transition-all duration-300 bg-gray-100 hover:bg-green-50 border border-gray-300 hover:border-green-500 hover:text-green-600">
+      <p className="mr-auto">{displayDate}</p>
+      <button
+        className="p-2 rounded-full transition-all duration-300 bg-gray-100 hover:bg-green-50 border border-gray-300 hover:border-green-500 hover:text-green-600"
+        onClick={handleButtonClick}
+      >
         <BsCalendar2WeekFill />
       </button>
+      <input
+        type="date"
+        ref={dateInputRef}
+        className="hidden"
+        onChange={handleDateChange}
+      />
     </div>
   );
 };
