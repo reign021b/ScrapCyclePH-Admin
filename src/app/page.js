@@ -12,6 +12,9 @@ import Map from "./components/map";
 export default function Home() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [operatorName, setOperatorName] = useState(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [profilePath, setProfilePath] = useState(null);
 
   useEffect(() => {
     const checkUser = async () => {
@@ -20,6 +23,23 @@ export default function Home() {
       if (!session) {
         router.push('/login');
       } else {
+        // Fetch operator details including profile_path and is_super_admin
+        const { data: operators, error: operatorError } = await supabase
+          .from('operators')
+          .select('name, is_super_admin, profile_path')
+          .eq('id', session.user.id)
+          .single(); // Use .single() if you expect only one row
+
+        if (operatorError) {
+          console.error('Error fetching operator:', operatorError);
+        } else if (operators) {
+          setOperatorName(operators.name);
+          setIsSuperAdmin(operators.is_super_admin);
+          // Clean the profile_path if necessary
+          const cleanedProfilePath = operators.profile_path?.replace(/^'|'$/g, '');
+          setProfilePath(cleanedProfilePath);
+        }
+
         setLoading(false);
       }
     };
@@ -38,12 +58,10 @@ export default function Home() {
         <div className="mr-auto">
           <Image src={`/scrapcycle-logo.png`} alt="Scrapcycle logo" width={230} height={50} />
         </div>
-        <p className="font-semibold">Genevieve Navales (Admin 1)</p>
+        <p className="font-semibold">{operatorName} ({isSuperAdmin ? 'Super Admin' : 'Admin'})</p>
         <Image
-          src={
-            "https://i.pinimg.com/564x/5b/01/dd/5b01dd38126870d000aee1ed5c8daa80.jpg"
-          }
-          alt=""
+          src={profilePath || "https://i.pinimg.com/564x/5b/01/dd/5b01dd38126870d000aee1ed5c8daa80.jpg"} // Use profilePath directly
+          alt="Profile picture"
           height={44}
           width={44}
           className="rounded-full ml-4 mr-3"
