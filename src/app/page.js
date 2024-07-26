@@ -55,9 +55,9 @@ export default function Home() {
     <main className="flex h-screen overflow-y-clip flex-col items-center text-slate-600 overflow-x-hidden">
       {/* app bar */}
       <div className="flex items-center w-screen px-4 bg-white">
-        <div className="mr-auto">
+        <a href='/' className="mr-auto">
           <Image src={`/scrapcycle-logo.png`} alt="Scrapcycle logo" width={230} height={50} />
-        </div>
+        </a>
         <p className="font-semibold">{operatorName} ({isSuperAdmin ? 'Super Admin' : 'Admin'})</p>
         <Image
           src={profilePath || "https://i.pinimg.com/564x/5b/01/dd/5b01dd38126870d000aee1ed5c8daa80.jpg"} // Use profilePath directly
