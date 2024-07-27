@@ -1,7 +1,8 @@
-import React from 'react';
-import { FaChevronUp } from 'react-icons/fa';
-import ActiveCollector from './active-collector';
-import UnpaidCollector from './unpaid-collector';
+import React from "react";
+import { FaChevronUp } from "react-icons/fa";
+import ActiveCollector from "./active-collector";
+import UnpaidCollector from "./unpaid-collector";
+import CityButtons from "./CityButtons";
 
 const Sidebar = () => {
   return (
@@ -17,17 +18,11 @@ const Sidebar = () => {
           <FaChevronUp />
         </button>
 
-        <UnpaidCollector />
+        <UnpaidCollector className="hidden" />
       </div>
 
       {/* cities */}
-      <div className="w-full border-y font-medium bg-white">
-        <button className="px-7 py-3 border-r bg-green-600 text-white">
-          Butuan
-        </button>
-        <button className="px-7 py-3 border-r">Cabadbaran</button>
-        <button className="px-7 py-3 border-r">Tagum</button>
-      </div>
+      <CityButtons />
     </div>
   );
 };
