@@ -10,11 +10,9 @@ const Sidebar = () => {
       <div className="h-screen-sidebar overflow-scroll ml-4 pr-1 py-6 overflow-x-clip">
         {/* active */}
         <ActiveCollector />
-        <ActiveCollector />
-        <ActiveCollector />
 
         {/* unpaid */}
-        <button className="flex w-full justify-between items-center mr-4 mt-6 mb-2 p-2 rounded-lg hover:bg-gray-100">
+        <button className="hidden w-full justify-between items-center mr-4 mt-6 mb-2 p-2 rounded-lg hover:bg-gray-100">
           <p className="font-semibold">Unpaid (1)</p>
           <FaChevronUp />
         </button>

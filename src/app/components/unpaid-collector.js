@@ -5,7 +5,7 @@ import { FaCheckCircle, FaPlusCircle, FaRegCircle } from "react-icons/fa";
 
 const UnpaidCollector = () => {
   return (
-    <button className="border p-5 mb-4 rounded-md flex items-stretch transition duration-100 hover:bg-gray-50 text-left w-full">
+    <button className="hidden border p-5 mb-4 rounded-md items-stretch transition duration-100 hover:bg-gray-50 text-left w-full">
       <Image
         alt=""
         src={`https://i.pinimg.com/564x/ef/80/97/ef8097fe4ac4fc38e5c12f1447b76f01.jpg`}
