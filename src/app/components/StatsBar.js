@@ -92,7 +92,7 @@ const StatsBar = () => {
         <div className="mr-4 text-lg text-gray-400 rotate-45">
           <FaRegCircle />
         </div>
-        <p>{totalCount !== null ? totalCount - completedCount : 'Loading...'}</p>
+        <p>{totalCount !== null ? totalCount - completedCount - cancelledCount : 'Loading...'}</p>
       </div>
       <div className="flex items-center justify-center w-24 border-r">
         <div className="mr-4 text-lg text-red-600 rotate-45">
