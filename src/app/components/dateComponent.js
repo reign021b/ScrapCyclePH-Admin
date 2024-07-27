@@ -1,14 +1,14 @@
-import React, { useRef, useState } from 'react';
-import { BsCalendar2WeekFill } from 'react-icons/bs';
+import React, { useRef, useState } from "react";
+import { BsCalendar2WeekFill } from "react-icons/bs";
 
 const DateComponent = () => {
   const dateInputRef = useRef(null);
   const [displayDate, setDisplayDate] = useState(() => {
     const today = new Date();
-    return today.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      weekday: 'short',
+    return today.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      weekday: "short",
     });
   });
 
@@ -20,10 +20,10 @@ const DateComponent = () => {
 
   const handleDateChange = (e) => {
     const date = new Date(e.target.value);
-    const formattedDate = date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      weekday: 'short',
+    const formattedDate = date.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      weekday: "short",
     });
     setDisplayDate(formattedDate);
   };
