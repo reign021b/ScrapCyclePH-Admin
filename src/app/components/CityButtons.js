@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 
 const CityButtons = () => {
-  const [activeCity, setActiveCity] = useState("Butuan City");
+  const [activeCity, setActiveCity] = useState("Tagum City");
 
   const handleClick = (city) => {
     setActiveCity(city);
@@ -10,17 +10,17 @@ const CityButtons = () => {
   };
 
   return (
-    <div className="w-full border-y font-medium bg-white">
+    <div className="w-full border-y font-medium bg-white flex">
       <button
-        className={`px-7 py-3 border-r ${
-          activeCity === "Butuan City" ? "bg-green-600 text-white" : "bg-white"
+        className={`w-full px-7 py-3 border-r ${
+          activeCity === "Tagum City" ? "bg-green-600 text-white" : "bg-white"
         }`}
-        onClick={() => handleClick("Butuan City")}
+        onClick={() => handleClick("Tagum City")}
       >
-        Butuan
+        Tagum
       </button>
       <button
-        className={`px-7 py-3 border-r ${
+        className={`w-full px-7 py-3 border-r ${
           activeCity === "Cabadbaran City"
             ? "bg-green-600 text-white"
             : "bg-white"
@@ -28,14 +28,6 @@ const CityButtons = () => {
         onClick={() => handleClick("Cabadbaran City")}
       >
         Cabadbaran
-      </button>
-      <button
-        className={`px-7 py-3 border-r ${
-          activeCity === "Tagum City" ? "bg-green-600 text-white" : "bg-white"
-        }`}
-        onClick={() => handleClick("Tagum City")}
-      >
-        Tagum
       </button>
     </div>
   );

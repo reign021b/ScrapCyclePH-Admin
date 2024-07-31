@@ -15,6 +15,7 @@ export default function Home() {
   const [operatorName, setOperatorName] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [profilePath, setProfilePath] = useState(null);
+  const [bookings, setBookings] = useState([]); // State to store bookings
 
   useEffect(() => {
     const checkUser = async () => {
@@ -43,6 +44,17 @@ export default function Home() {
             ""
           );
           setProfilePath(cleanedProfilePath);
+        }
+
+        // Fetch bookings for today
+        const { data: bookingsData, error: bookingsError } = await supabase.rpc(
+          "get_bookings_for_today"
+        );
+
+        if (bookingsError) {
+          console.error("Error fetching bookings:", bookingsError);
+        } else {
+          setBookings(bookingsData);
         }
 
         setLoading(false);
@@ -116,9 +128,9 @@ export default function Home() {
       <div className="flex flex-grow w-full bg-white border-t">
         {/* side bar */}
         <Sidebar />
-
         {/* map */}
-        <Map />
+        <Map bookings={bookings} />{" "}
+        {/* Pass bookings data to the Map component */}
       </div>
     </main>
   );

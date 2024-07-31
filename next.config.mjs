@@ -2,8 +2,9 @@
 const nextConfig = {
   images: {
     domains: [
-      'i.pinimg.com',
-      'alfljqjdwlomzepvepun.supabase.co'
+      "i.pinimg.com",
+      "img.freepik.com",
+      "alfljqjdwlomzepvepun.supabase.co",
     ],
   },
 };
