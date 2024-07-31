@@ -4,6 +4,7 @@ const nextConfig = {
     domains: [
       "i.pinimg.com",
       "img.freepik.com",
+      "lh3.googleusercontent.com",
       "alfljqjdwlomzepvepun.supabase.co",
     ],
   },

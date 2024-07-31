@@ -60,7 +60,7 @@ const ActiveCollector = () => {
           return (
             <button
               key={index}
-              className="border p-5 mb-4 rounded-md transition duration-100 hover:bg-gray-50 w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border p-5 mb-4 rounded-md transition duration-100 hover:bg-gray-50 w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 mx-2"
             >
               <div className="flex mb-3">
                 <Image
@@ -76,9 +76,14 @@ const ActiveCollector = () => {
                     <span className="text-xs">({item.junkshop_name})</span>
                   </p>
                   <div className="flex flex-grow text-sm w-full mt-1 mb-2">
-                    <p className="flex-grow">Trade: ₱{totalTrade}</p>
-                    <p className="flex-grow">Comm.: ₱{totalCommission}</p>
+                    <p className="flex-grow">
+                      Trade: ₱{Number(totalTrade).toLocaleString()}
+                    </p>
+                    <p className="flex-grow">
+                      Comm.: ₱{Number(totalCommission).toLocaleString()}
+                    </p>
                   </div>
+
                   <div className="flex text-md">
                     <div className="flex flex-grow items-center justify-start">
                       <div className="mr-4 text-green-600">
