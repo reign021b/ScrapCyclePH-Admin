@@ -99,6 +99,12 @@ const BookingSidebar = () => {
                   </div>
                 </p>
                 <p className="font-bold m-3 text-black">
+                  Item Types: <br />
+                  <div className="font-normal text-gray-500 mt-1">
+                    {booking.item_types.join(", ")}
+                  </div>
+                </p>
+                <p className="font-bold m-3 text-black">
                   Estimated Weight: <br />
                   <div className="font-normal text-gray-500 mt-1">
                     {booking.weight_quantity} kg
@@ -114,7 +120,7 @@ const BookingSidebar = () => {
                         {idx + 1}
                       </div>
                       <div>
-                        <p className="font-semibold text-lg">{item.type}</p>
+                        <p className="font-semibold text-lg">{item.item}</p>
                         <p className="text-sm text-gray-500">
                           {item.quantity.toLocaleString()} {item.unit}(s) @ ₱
                           {item.price.toLocaleString()}/{item.unit}
@@ -128,7 +134,6 @@ const BookingSidebar = () => {
                   </li>
                 ))}
               </ul>
-
               <br></br>
             </div>
           </li>
