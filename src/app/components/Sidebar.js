@@ -7,7 +7,7 @@ import CityButtons from "./CityButtons";
 
 const Sidebar = () => {
   return (
-    <div className="min-w-[400px] max-w-[400px] border-r flex flex-col justify-between h-full">
+    <div className="min-w-[31rem] max-w-[31rem] border-r flex flex-col justify-between h-full">
       {/* collectors */}
       <div className="h-screen-sidebar overflow-scroll py-6 overflow-x-clip">
         {/* active */}

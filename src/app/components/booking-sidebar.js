@@ -1,11 +1,15 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { supabase } from "/utils/supabase/client.ts";
+import { FaChevronDown } from "react-icons/fa";
 
 const BookingSidebar = () => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [dropdownOptions, setDropdownOptions] = useState([]);
+  const [selectedLiner, setSelectedLiner] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -13,11 +17,7 @@ const BookingSidebar = () => {
         const { data, error } = await supabase.rpc(
           "get_sidebar_bookings_for_today"
         );
-
         if (error) throw error;
-
-        console.log("Fetched Bookings:", data); // Log fetched bookings
-
         setBookings(data);
       } catch (error) {
         setError(error.message);
@@ -26,11 +26,32 @@ const BookingSidebar = () => {
       }
     };
 
+    const fetchDropdownOptions = async () => {
+      try {
+        const { data, error } = await supabase.rpc("get_liner_dropdown");
+        if (error) throw error;
+        setDropdownOptions(data);
+      } catch (error) {
+        setError(error.message);
+      }
+    };
+
     fetchBookings();
+    fetchDropdownOptions();
   }, []);
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  const handleDropdownClick = () => {
+    setDropdownOpen(!dropdownOpen);
+  };
+
+  const handleOptionClick = (option) => {
+    setSelectedLiner(`${option.full_name} (${option.business_name})`);
+    setDropdownOpen(false);
+  };
+
+  if (loading) return <div className="p-4 text-center">Loading...</div>;
+  if (error)
+    return <div className="p-4 text-center text-red-500">Error: {error}</div>;
 
   return (
     <div className="booking-sidebar my-5">
@@ -58,6 +79,41 @@ const BookingSidebar = () => {
                   </p>
                 </div>
               </div>
+
+              <div className="relative mb-4 w-full items-center justify-center flex">
+                <div className="text-xl font-semibold pb-5 text-black">
+                  Liner:
+                </div>
+                &nbsp;
+                <button
+                  className="w-3/5 text-left border-2 border-green-600 rounded-2xl py-2 px-4 mb-4 text-black flex items-center justify-center"
+                  onClick={handleDropdownClick}
+                >
+                  <span className="mr-2">
+                    {selectedLiner || "Select Liner"}
+                  </span>
+                  <FaChevronDown className="w-4 h-4" />
+                </button>
+                {dropdownOpen && (
+                  <div className="absolute w-3/4 bg-white border rounded-lg shadow-lg mt-1 z-10">
+                    <ul>
+                      {dropdownOptions.map((option) => (
+                        <li
+                          key={option.id}
+                          onClick={() => handleOptionClick(option)}
+                          className="p-2 hover:bg-gray-200 cursor-pointer"
+                        >
+                          <span className="font-semibold">
+                            {option.full_name}
+                          </span>{" "}
+                          ({option.business_name})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+
               <div
                 className={`my-2 p-3 w-full grid grid-cols-2 pr-16 mb-5 ${
                   booking.status === "true" ? "bg-green-50" : "bg-yellow-50"
@@ -71,21 +127,19 @@ const BookingSidebar = () => {
                     booking.status === "true"
                       ? "text-green-500"
                       : "text-orange-500"
-                  } text-[13px] grid w-fit px-8 font-semibold text-left rounded-full ${
+                  } text-[13px] grid w-2/3 px-8 font-semibold text-center rounded-full ${
                     booking.status === "true" ? "bg-green-100" : "bg-orange-100"
                   } w-full justify-left items-left pb-1`}
                 >
-                  {console.log("Booking Status:", booking.status)}{" "}
-                  {/* Log each booking status */}
                   {booking.status === "true" ? "Completed" : "Incomplete"}
                 </p>
               </div>
 
-              <p className="font-semibold m-3 text-black">
+              <p className="font-semibold m-3 text-black text-center">
                 {booking.address_name}
               </p>
 
-              <div className="text-sm grid grid-cols-2 border-b w-full pb-3 m-2">
+              <div className="text-sm grid grid-cols-2 border-b w-full pb-3 m-2 pl-5">
                 <p className="font-bold m-3 text-black">
                   Waste Type: <br />
                   <div className="text-gray-500 font-normal mt-1">
@@ -112,7 +166,7 @@ const BookingSidebar = () => {
                 </p>
               </div>
 
-              <ul className="mt-5">
+              <ul className="mt-5 px-5">
                 {booking.items.map((item, idx) => (
                   <li key={idx}>
                     <div className="px-5 flex w-full text-black">
