@@ -7,12 +7,9 @@ const BookingSidebar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedLiner, setSelectedLiner] = useState(null);
   const [dropdownOptions, setDropdownOptions] = useState([]);
-  const [bookings, setBookings] = useState([]); // Add state for bookings
-  const [loading, setLoading] = useState(true); // Add state for loading
 
   useEffect(() => {
     fetchDropdownOptions();
-    fetchBookings(); // Fetch bookings on component mount
   }, []);
 
   const fetchDropdownOptions = async () => {
@@ -31,27 +28,6 @@ const BookingSidebar = () => {
     }
   };
 
-  const fetchBookings = async () => {
-    try {
-      console.log("Fetching bookings...");
-      const { data, error } = await supabase.rpc(
-        "get_sidebar_bookings_for_today_ver2"
-      );
-
-      if (error) {
-        console.error("Error fetching bookings:", error.message);
-        setLoading(false);
-        return;
-      }
-      console.log("Fetched bookings:", data);
-      setBookings(data);
-    } catch (error) {
-      console.error("Unexpected error in fetchBookings:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleDropdownClick = () => {
     setDropdownOpen(!dropdownOpen);
   };
@@ -61,12 +37,64 @@ const BookingSidebar = () => {
     setDropdownOpen(false);
   };
 
+  const bookings = [
+    {
+      full_name: "tgg",
+      avatar_url:
+        "https://lh3.googleusercontent.com/a/ACg8ocIzlBLdCU6LRviIFTUVH82b0phg3ZR33PaiC-hDRBMYchNnfQ=s96-c",
+      phone_number: "09223325852",
+      status: "false",
+      address_name: "Diego Silang Pob. (Brgy 6) Butuan City   Caraga",
+      waste_type: "Household Waste",
+      large_recyclables: "false",
+      estimated_weight: "12",
+      item_types: ["battery", "e-waste", "metal", "plastic"],
+      items: [
+        {
+          item: "copper",
+          unit: "kg",
+          price: "250.00",
+          quantity: "500",
+        },
+        {
+          item: "11 plates  (car battery)",
+          unit: "piece",
+          price: "300.00",
+          quantity: "100",
+        },
+        {
+          item: "refrigerator (single door)",
+          unit: "piece",
+          price: "150.00",
+          quantity: "120",
+        },
+        {
+          item: "kola plastic",
+          unit: "kg",
+          price: "0.75",
+          quantity: "1",
+        },
+      ],
+    },
+    {
+      full_name: "Sungha Jung",
+      avatar_url:
+        "https://lh3.googleusercontent.com/a/ACg8ocL11Ke0VkI4VH8EvBAN0l-9O9QHjSZ90OpYUgbzUO2FhgirF4c1=s96-c",
+      phone_number: "12212112122",
+      status: "false",
+      address_name: "Butuan City Butuan City   Caraga",
+      waste_type: "Household Waste",
+      large_recyclables: "false",
+      estimated_weight: "15",
+      item_types: [],
+      items: [],
+    },
+  ];
+
   return (
     <div className="booking-sidebar my-5">
       <ul>
-        {loading ? (
-          <li className="text-center">Loading...</li>
-        ) : bookings.length > 0 ? (
+        {bookings.length > 0 ? (
           bookings.map((booking, index) => (
             <li key={index}>
               <div className="rounded-lg container m-0 p-0">
@@ -86,7 +114,7 @@ const BookingSidebar = () => {
                       {booking.full_name}
                     </h3>
                     <p className="text-sm text-gray-500 w-full">
-                      Phone: {booking["Phone Number"]}
+                      Phone: {booking.phone_number}
                     </p>
                   </div>
                 </div>
@@ -121,7 +149,7 @@ const BookingSidebar = () => {
 
                 <div
                   className={`my-2 p-3 w-full grid grid-cols-2 pr-16 mb-5 ${
-                    booking.status ? "bg-green-50" : "bg-yellow-50"
+                    booking.status === "true" ? "bg-green-50" : "bg-yellow-50"
                   }`}
                 >
                   <div className="font-semibold text-black text-right mr-3">
@@ -129,12 +157,16 @@ const BookingSidebar = () => {
                   </div>
                   <p
                     className={`${
-                      booking.status ? "text-green-500" : "text-orange-500"
+                      booking.status === "true"
+                        ? "text-green-500"
+                        : "text-orange-500"
                     } text-[13px] grid w-fit px-8 font-semibold text-left rounded-full ${
-                      booking.status ? "bg-green-100" : "bg-orange-100"
+                      booking.status === "true"
+                        ? "bg-green-100"
+                        : "bg-orange-100"
                     } w--fit justify-left items-center`}
                   >
-                    {booking.status ? "Completed" : "Incomplete"}
+                    {booking.status === "true" ? "Completed" : "Incomplete"}
                   </p>
                 </div>
 
@@ -146,26 +178,26 @@ const BookingSidebar = () => {
                   <p className="font-bold m-3 text-black">
                     Waste Type: <br />
                     <div className="text-gray-500 font-normal mt-1">
-                      {booking["Waste Type"]}
+                      {booking.waste_type}
                     </div>
                   </p>
-
                   <p className="font-bold m-3 text-black">
                     Large Recyclables: <br />
                     <div className="font-normal text-gray-500 mt-1">
-                      {booking.large_recyclables ? "Yes" : "No"}
+                      {booking.large_recyclables === "true" ? "Yes" : "No"}
                     </div>
                   </p>
                   <p className="font-bold m-3 text-black">
                     Item Types: <br />
                     <div className="font-normal text-gray-500 mt-1">
-                      {booking["Item Types"]?.join(", ")}
+                      {booking.item_types.join(", ")}
                     </div>
                   </p>
+
                   <p className="font-bold m-3 text-black">
                     Estimated Weight: <br />
                     <div className="font-normal text-gray-500 mt-1">
-                      {booking["Estimated Weight"]} kg
+                      {booking.estimated_weight} kg
                     </div>
                   </p>
                 </div>
@@ -175,23 +207,20 @@ const BookingSidebar = () => {
                     booking.items.map((item, idx) => (
                       <li key={idx}>
                         <div className="px-5 w-full text-black grid grid-cols-6 items-center justify-between">
-                          <div className="col-span-1 w-1/12 text-gray-500 font-semibold">
+                          <div className="col-span-1 w-1/6 text-gray-500 font-semibold">
                             {idx + 1}
                           </div>
                           <div className="col-span-4">
                             <span className="font-semibold">{item.item}:</span>
                             <br />{" "}
-                            <span className="text-gray-500">
+                            <span className="text-gray-">
                               {item.quantity} {item.unit} @ ₱
                               {parseFloat(item.price).toLocaleString()}/
                               {item.unit}
                             </span>
                           </div>
                           <div className="font-semibold">
-                            ₱{" "}
-                            {(
-                              parseFloat(item.price) * parseFloat(item.quantity)
-                            ).toLocaleString()}
+                            ₱ {(item.price * item.quantity).toLocaleString()}
                           </div>
                         </div>
                         <br />
