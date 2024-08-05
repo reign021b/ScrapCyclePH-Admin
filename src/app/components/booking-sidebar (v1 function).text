@@ -7,9 +7,11 @@ const BookingSidebar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedLiner, setSelectedLiner] = useState(null);
   const [dropdownOptions, setDropdownOptions] = useState([]);
+  const [bookings, setBookings] = useState([]);
 
   useEffect(() => {
     fetchDropdownOptions();
+    fetchBookings();
   }, []);
 
   const fetchDropdownOptions = async () => {
@@ -28,6 +30,24 @@ const BookingSidebar = () => {
     }
   };
 
+  const fetchBookings = async () => {
+    try {
+      console.log("Fetching bookings...");
+      const { data, error } = await supabase.rpc(
+        "get_sidebar_bookings_for_today"
+      );
+
+      if (error) {
+        console.error("Error fetching bookings:", error.message);
+        return;
+      }
+      console.log("Fetched bookings:", data);
+      setBookings(data);
+    } catch (error) {
+      console.error("Unexpected error in fetchBookings:", error);
+    }
+  };
+
   const handleDropdownClick = () => {
     setDropdownOpen(!dropdownOpen);
   };
@@ -36,60 +56,6 @@ const BookingSidebar = () => {
     setSelectedLiner(`${option.full_name} (${option.business_name})`);
     setDropdownOpen(false);
   };
-
-  const bookings = [
-    {
-      full_name: "tgg",
-      avatar_url:
-        "https://lh3.googleusercontent.com/a/ACg8ocIzlBLdCU6LRviIFTUVH82b0phg3ZR33PaiC-hDRBMYchNnfQ=s96-c",
-      phone_number: "09223325852",
-      status: "false",
-      address_name: "Diego Silang Pob. (Brgy 6) Butuan City   Caraga",
-      waste_type: "Household Waste",
-      large_recyclables: "false",
-      estimated_weight: "12",
-      item_types: ["battery", "e-waste", "metal", "plastic"],
-      items: [
-        {
-          item: "copper",
-          unit: "kg",
-          price: "250.00",
-          quantity: "500",
-        },
-        {
-          item: "11 plates  (car battery)",
-          unit: "piece",
-          price: "300.00",
-          quantity: "100",
-        },
-        {
-          item: "refrigerator (single door)",
-          unit: "piece",
-          price: "150.00",
-          quantity: "120",
-        },
-        {
-          item: "kola plastic",
-          unit: "kg",
-          price: "0.75",
-          quantity: "1",
-        },
-      ],
-    },
-    {
-      full_name: "Sungha Jung",
-      avatar_url:
-        "https://lh3.googleusercontent.com/a/ACg8ocL11Ke0VkI4VH8EvBAN0l-9O9QHjSZ90OpYUgbzUO2FhgirF4c1=s96-c",
-      phone_number: "12212112122",
-      status: "false",
-      address_name: "Butuan City Butuan City   Caraga",
-      waste_type: "Household Waste",
-      large_recyclables: "false",
-      estimated_weight: "15",
-      item_types: [],
-      items: [],
-    },
-  ];
 
   return (
     <div className="booking-sidebar my-5">

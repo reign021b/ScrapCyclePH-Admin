@@ -1,18 +1,19 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { FaChevronDown } from "react-icons/fa";
-import { supabase } from "/utils/supabase/client"; // Update the import path as necessary
+import { supabase } from "/utils/supabase/client";
+import ProfileImage from "./ProfileImage"; // Import the ProfileImage component
 
 const BookingSidebar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedLiner, setSelectedLiner] = useState(null);
   const [dropdownOptions, setDropdownOptions] = useState([]);
-  const [bookings, setBookings] = useState([]); // Add state for bookings
-  const [loading, setLoading] = useState(true); // Add state for loading
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDropdownOptions();
-    fetchBookings(); // Fetch bookings on component mount
+    fetchBookings();
   }, []);
 
   const fetchDropdownOptions = async () => {
@@ -72,14 +73,18 @@ const BookingSidebar = () => {
               <div className="rounded-lg container m-0 p-0">
                 <div className="flex my-5">
                   <div className="ml-3 pl-3 pr-4">
-                    <Image
-                      src={booking.avatar_url || "/default-avatar.png"}
-                      alt={booking.full_name}
-                      width={68}
-                      height={68}
-                      layout="fixed"
-                      className="rounded-2xl"
-                    />
+                    {booking.avatar_url ? (
+                      <Image
+                        src={booking.avatar_url}
+                        alt={booking.full_name}
+                        width={68}
+                        height={68}
+                        layout="fixed"
+                        className="rounded-2xl"
+                      />
+                    ) : (
+                      <ProfileImage fullName={booking.full_name || ""} />
+                    )}
                   </div>
                   <div className="justify-center items-center my-auto">
                     <h3 className="text-black font-semibold text-[21px]">
@@ -121,7 +126,11 @@ const BookingSidebar = () => {
 
                 <div
                   className={`my-2 p-3 w-full grid grid-cols-2 pr-16 mb-5 ${
-                    booking.status ? "bg-green-50" : "bg-yellow-50"
+                    booking.cancelled
+                      ? "bg-red-50"
+                      : booking.status
+                      ? "bg-green-50"
+                      : "bg-yellow-50"
                   }`}
                 >
                   <div className="font-semibold text-black text-right mr-3">
@@ -129,12 +138,24 @@ const BookingSidebar = () => {
                   </div>
                   <p
                     className={`${
-                      booking.status ? "text-green-500" : "text-orange-500"
+                      booking.cancelled
+                        ? "text-red-500"
+                        : booking.status
+                        ? "text-green-500"
+                        : "text-orange-500"
                     } text-[13px] grid w-fit px-8 font-semibold text-left rounded-full ${
-                      booking.status ? "bg-green-100" : "bg-orange-100"
+                      booking.cancelled
+                        ? "bg-red-100"
+                        : booking.status
+                        ? "bg-green-100"
+                        : "bg-orange-100"
                     } w--fit justify-left items-center`}
                   >
-                    {booking.status ? "Completed" : "Incomplete"}
+                    {booking.cancelled
+                      ? "Cancelled"
+                      : booking.status
+                      ? "Completed"
+                      : "Incomplete"}
                   </p>
                 </div>
 

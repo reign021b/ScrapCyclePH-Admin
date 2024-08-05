@@ -48,7 +48,7 @@ const ActiveCollector = () => {
   return (
     <>
       {summaryData.length === 0 ? (
-        <p>No data available</p>
+        <p className="text-center">No data available</p>
       ) : (
         summaryData.map((item, index) => {
           const totalTrade = item.total_trade?.toFixed(2) ?? "0.00";
