@@ -18,6 +18,11 @@ const Map = ({ bookings = [] }) => {
     []
   );
 
+  const handleMarkerClick = (bookingId) => {
+    // Show an alert with the booking ID
+    alert("Booking ID: " + bookingId);
+  };
+
   return (
     <div className="w-full h-full">
       <MapContainer
@@ -36,12 +41,13 @@ const Map = ({ bookings = [] }) => {
           if (!coordinatesString || !coordinatesString.includes(","))
             return null;
 
+          // Assuming coordinates are in the format "latitude, longitude"
           const [latitudeStr, longitudeStr] = coordinatesString
-            .replace(/[{}]/g, "")
-            .trim()
-            .split(",");
-          const latitude = parseFloat(latitudeStr.trim());
-          const longitude = parseFloat(longitudeStr.trim());
+            .split(",")
+            .map((str) => str.trim());
+
+          const latitude = parseFloat(latitudeStr);
+          const longitude = parseFloat(longitudeStr);
 
           if (isNaN(latitude) || isNaN(longitude)) {
             console.warn(`Invalid coordinates for booking ID: ${booking.id}`);
@@ -56,6 +62,7 @@ const Map = ({ bookings = [] }) => {
               position={leafletCoordinates}
               icon={myIcon}
               eventHandlers={{
+                click: () => handleMarkerClick(booking.id),
                 mouseover: (e) => e.target.openPopup(),
                 mouseout: (e) => e.target.closePopup(),
               }}

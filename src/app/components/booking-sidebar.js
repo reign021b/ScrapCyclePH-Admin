@@ -136,7 +136,7 @@ const BookingSidebar = () => {
                     Liner:{" "}
                   </div>
                   <button
-                    className="flex w-2/3 text-center items-center justify-center border rounded-2xl py-2 px-4 mb-4 bg-gray-50 text-black hover:bg-gray-100"
+                    className="flex w-2/3 text-center items-center justify-center border border-green-500 rounded-2xl py-1 px-4 mb-4 text-black hover:bg-gray-100"
                     onClick={() => handleDropdownClick(booking.id)}
                   >
                     <span className="mr-2">
