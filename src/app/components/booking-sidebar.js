@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import Image from "next/image";
 import { FaChevronDown } from "react-icons/fa";
 import { supabase } from "/utils/supabase/client";
-import ProfileImage from "./ProfileImage"; // Import the ProfileImage component
+import ProfileImage from "./ProfileImage";
 
 const BookingSidebar = () => {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedLiner, setSelectedLiner] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(null); // Store open state for specific booking
+  const [selectedLiners, setSelectedLiners] = useState({}); // Map to track selected liners per booking
+  const [assignedLiners, setAssignedLiners] = useState(new Map()); // Track assigned liners per booking
   const [dropdownOptions, setDropdownOptions] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +14,7 @@ const BookingSidebar = () => {
   useEffect(() => {
     fetchDropdownOptions();
     fetchBookings();
-  }, []);
+  }, []); // Empty dependency array ensures this effect only runs once
 
   const fetchDropdownOptions = async () => {
     try {
@@ -26,7 +26,19 @@ const BookingSidebar = () => {
         return;
       }
       console.log("Fetched dropdown options:", data);
-      setDropdownOptions(data);
+      setDropdownOptions(data || []); // Ensure data is always an array
+
+      // Create a map of dropdown options by their ID for quick lookup
+      const dropdownMap = new Map(data.map((option) => [option.id, option]));
+      setSelectedLiners((prevLiners) => {
+        const updatedLiners = { ...prevLiners };
+        bookings.forEach((booking) => {
+          if (booking.liner_id && dropdownMap.has(booking.liner_id)) {
+            updatedLiners[booking.id] = dropdownMap.get(booking.liner_id);
+          }
+        });
+        return updatedLiners;
+      });
     } catch (error) {
       console.error("Unexpected error in fetchDropdownOptions:", error);
     }
@@ -46,6 +58,15 @@ const BookingSidebar = () => {
       }
       console.log("Fetched bookings:", data);
       setBookings(data);
+
+      // Initialize assigned liners state based on fetched bookings
+      const linersMap = new Map();
+      data.forEach((booking) => {
+        if (booking.liner_id) {
+          linersMap.set(booking.id, booking.liner_id);
+        }
+      });
+      setAssignedLiners(linersMap);
     } catch (error) {
       console.error("Unexpected error in fetchBookings:", error);
     } finally {
@@ -53,13 +74,38 @@ const BookingSidebar = () => {
     }
   };
 
-  const handleDropdownClick = () => {
-    setDropdownOpen(!dropdownOpen);
+  const handleDropdownClick = (bookingId) => {
+    setDropdownOpen(dropdownOpen === bookingId ? null : bookingId);
   };
 
-  const handleOptionClick = (option) => {
-    setSelectedLiner(`${option.full_name} (${option.business_name})`);
-    setDropdownOpen(false);
+  const handleOptionClick = async (bookingId, option) => {
+    if (assignedLiners.has(bookingId)) {
+      alert("This booking already has a liner assigned.");
+      return;
+    }
+
+    setSelectedLiners((prev) => ({
+      ...prev,
+      [bookingId]: option,
+    }));
+    setAssignedLiners((prev) => new Map(prev).set(bookingId, option.id));
+
+    try {
+      const { error } = await supabase
+        .from("bookings")
+        .update({ liner_id: option.id })
+        .eq("id", bookingId);
+
+      if (error) {
+        console.error("Error updating booking:", error.message);
+      } else {
+        console.log("Booking updated successfully.");
+      }
+    } catch (error) {
+      console.error("Unexpected error in handleOptionClick:", error);
+    }
+
+    setDropdownOpen(null);
   };
 
   return (
@@ -73,18 +119,7 @@ const BookingSidebar = () => {
               <div className="rounded-lg container m-0 p-0">
                 <div className="flex my-5">
                   <div className="ml-3 pl-3 pr-4">
-                    {booking.avatar_url ? (
-                      <Image
-                        src={booking.avatar_url}
-                        alt={booking.full_name}
-                        width={68}
-                        height={68}
-                        layout="fixed"
-                        className="rounded-2xl"
-                      />
-                    ) : (
-                      <ProfileImage fullName={booking.full_name || ""} />
-                    )}
+                    <ProfileImage fullName={booking.full_name || ""} />
                   </div>
                   <div className="justify-center items-center my-auto">
                     <h3 className="text-black font-semibold text-[21px]">
@@ -97,23 +132,43 @@ const BookingSidebar = () => {
                 </div>
 
                 <div className="flex relative mb-4 justify-center items-center">
+                  <div className="font-semibold text-lg text-black pb-3 pr-3">
+                    Liner:{" "}
+                  </div>
                   <button
-                    className="flex w-1/2 text-center items-center justify-center border rounded-2xl py-2 px-4 mb-4 bg-gray-50 text-black hover:bg-gray-100"
-                    onClick={handleDropdownClick}
+                    className="flex w-2/3 text-center items-center justify-center border rounded-2xl py-2 px-4 mb-4 bg-gray-50 text-black hover:bg-gray-100"
+                    onClick={() => handleDropdownClick(booking.id)}
                   >
                     <span className="mr-2">
-                      {selectedLiner || "Select Liner"}
+                      {selectedLiners[booking.id]
+                        ? `${selectedLiners[booking.id].full_name} (${
+                            selectedLiners[booking.id].business_name
+                          })`
+                        : assignedLiners.has(booking.id)
+                        ? `${
+                            dropdownOptions.find(
+                              (option) =>
+                                option.id === assignedLiners.get(booking.id)
+                            )?.full_name || "Unknown"
+                          } (${
+                            dropdownOptions.find(
+                              (option) =>
+                                option.id === assignedLiners.get(booking.id)
+                            )?.business_name || "Unknown"
+                          })`
+                        : "Assign Liner"}
                     </span>
                     <FaChevronDown className="w-4 h-4" />
                   </button>
-
-                  {dropdownOpen && (
+                  {dropdownOpen === booking.id && (
                     <div className="absolute w-1/2 bg-white border rounded-lg shadow-lg mt-1 z-10">
                       <ul>
                         {dropdownOptions.map((option) => (
                           <li
                             key={option.id}
-                            onClick={() => handleOptionClick(option)}
+                            onClick={() =>
+                              handleOptionClick(booking.id, option)
+                            }
                             className="p-2 hover:bg-gray-200 cursor-pointer"
                           >
                             {option.full_name} ({option.business_name})
@@ -191,7 +246,7 @@ const BookingSidebar = () => {
                   </p>
                 </div>
 
-                <ul className="mt-5">
+                <ul className="mt-5 text-sm">
                   {booking.items.length > 0 ? (
                     booking.items.map((item, idx) => (
                       <li key={idx}>
@@ -201,18 +256,22 @@ const BookingSidebar = () => {
                           </div>
                           <div className="col-span-4">
                             <span className="font-semibold">{item.item}:</span>
-                            <br />{" "}
+                            <br />
                             <span className="text-gray-500">
                               {item.quantity} {item.unit} @ ₱
-                              {parseFloat(item.price).toLocaleString()}/
-                              {item.unit}
+                              {parseFloat(item.price)
+                                .toFixed(2)
+                                .replace(/\d(?=(\d{3})+\.)/g, "$&,")}
+                              /{item.unit}
                             </span>
                           </div>
                           <div className="font-semibold">
-                            ₱{" "}
+                            ₱
                             {(
                               parseFloat(item.price) * parseFloat(item.quantity)
-                            ).toLocaleString()}
+                            )
+                              .toFixed(2)
+                              .replace(/\d(?=(\d{3})+\.)/g, "$&,")}
                           </div>
                         </div>
                         <br />
