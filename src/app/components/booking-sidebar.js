@@ -278,7 +278,7 @@ const BookingSidebar = () => {
                       </li>
                     ))
                   ) : (
-                    <li className="px-5 flex w-full text-gray-500">
+                    <li className="px-5 flex w-full text-gray-500 mx-auto items-center justify-center">
                       No items available
                     </li>
                   )}

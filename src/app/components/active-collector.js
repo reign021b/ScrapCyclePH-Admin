@@ -95,7 +95,11 @@ const ActiveCollector = () => {
                       <div className="mr-4 text-gray-400 rotate-45">
                         <FaRegCircle />
                       </div>
-                      <p>{totalNumberOfBookings - completedBooking}</p>
+                      <p>
+                        {totalNumberOfBookings -
+                          completedBooking -
+                          cancelledBooking}
+                      </p>
                     </div>
                     <div className="flex flex-grow items-center justify-start">
                       <div className="mr-4 text-red-600 rotate-45">

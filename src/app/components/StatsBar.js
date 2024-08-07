@@ -102,7 +102,9 @@ const StatsBar = () => {
           <FaRegCircle />
         </div>
         <p>
-          {totalCount !== null ? totalCount - completedCount : "Loading..."}
+          {totalCount !== null
+            ? totalCount - completedCount - cancelledCount
+            : "Loading..."}
         </p>
       </div>
       <div className="flex items-center justify-center w-24 border-r">
