@@ -25,7 +25,7 @@ const ActiveCollector = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    async function getData() {
+    const getData = async () => {
       try {
         const data = await fetchDailyBookingsSummary();
         setSummaryData(data);
@@ -33,8 +33,13 @@ const ActiveCollector = () => {
         console.error("Failed to fetch data:", err);
         setError("Failed to fetch data.");
       }
-    }
+    };
+
     getData();
+    const intervalId = setInterval(getData, 8000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
@@ -89,17 +94,13 @@ const ActiveCollector = () => {
                       <div className="mr-4 text-green-600">
                         <FaCheckCircle />
                       </div>
-                      <p>{completedBooking}</p>
+                      <p>{completedBooking - cancelledBooking}</p>
                     </div>
                     <div className="flex flex-grow items-center justify-start">
                       <div className="mr-4 text-gray-400 rotate-45">
                         <FaRegCircle />
                       </div>
-                      <p>
-                        {totalNumberOfBookings -
-                          completedBooking -
-                          cancelledBooking}
-                      </p>
+                      <p>{totalNumberOfBookings - completedBooking}</p>
                     </div>
                     <div className="flex flex-grow items-center justify-start">
                       <div className="mr-4 text-red-600 rotate-45">
@@ -112,11 +113,15 @@ const ActiveCollector = () => {
               </div>
               <div className="rounded-full h-2.5 w-full bg-gray-200">
                 <div
-                  className="h-full bg-green-600 rounded-full"
+                  className="flex h-full bg-green-600 rounded-full"
                   style={{
                     width:
                       totalNumberOfBookings > 0
-                        ? `${(completedBooking / totalNumberOfBookings) * 100}%`
+                        ? `${
+                            ((completedBooking - cancelledBooking) /
+                              (totalNumberOfBookings - cancelledBooking)) *
+                            100
+                          }%`
                         : "0%",
                   }}
                 />

@@ -14,6 +14,10 @@ const BookingSidebar = () => {
   useEffect(() => {
     fetchDropdownOptions();
     fetchBookings();
+    const intervalId = setInterval(fetchBookings, 8000); // Fetch bookings every 8 seconds
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
   }, []); // Empty dependency array ensures this effect only runs once
 
   const fetchDropdownOptions = async () => {

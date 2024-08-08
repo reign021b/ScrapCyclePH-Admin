@@ -18,14 +18,8 @@ export default function Home() {
   const [bookings, setBookings] = useState([]); // State to store bookings
 
   useEffect(() => {
-    const checkUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      if (!session) {
-        router.push("/login");
-      } else {
+    const fetchOperatorAndBookings = async (session) => {
+      try {
         // Fetch operator details including profile_path and is_super_admin
         const { data: operators, error: operatorError } = await supabase
           .from("operators")
@@ -38,7 +32,6 @@ export default function Home() {
         } else if (operators) {
           setOperatorName(operators.name);
           setIsSuperAdmin(operators.is_super_admin);
-          // Clean the profile_path if necessary
           const cleanedProfilePath = operators.profile_path?.replace(
             /^'|'$/g,
             ""
@@ -47,17 +40,44 @@ export default function Home() {
         }
 
         // Fetch bookings for today
+        await fetchBookings();
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchBookings = async () => {
+      try {
         const { data: bookingsData, error: bookingsError } = await supabase.rpc(
           "get_bookings_for_today"
         );
 
         if (bookingsError) {
-          console.error("Error fetching bookings:", bookingsError);
-        } else {
-          setBookings(bookingsData);
+          throw bookingsError;
         }
 
-        setLoading(false);
+        setBookings(bookingsData);
+      } catch (error) {
+        console.error("Error fetching bookings:", error.message);
+      }
+    };
+
+    const checkUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        router.push("/login");
+      } else {
+        fetchOperatorAndBookings(session);
+        // Set up interval to fetch bookings every 8 seconds
+        const intervalId = setInterval(fetchBookings, 8000);
+
+        // Cleanup interval on component unmount
+        return () => clearInterval(intervalId);
       }
     };
 
@@ -70,7 +90,7 @@ export default function Home() {
         "postgres_changes",
         { event: "*", schema: "public", table: "operators" },
         (payload) => {
-          if (payload.new && payload.new.id === session.user.id) {
+          if (payload.new && payload.new.id === session?.user.id) {
             setOperatorName(payload.new.name);
             setIsSuperAdmin(payload.new.is_super_admin);
             const cleanedProfilePath = payload.new.profile_path?.replace(
