@@ -12,7 +12,6 @@ async function fetchDailyBookingsSummary() {
       console.error("Error fetching daily bookings summary:", error);
       return [];
     }
-    console.log("Fetched data:", data); // Log fetched data for debugging
     return data;
   } catch (error) {
     console.error("Unexpected error fetching data:", error);
@@ -42,9 +41,7 @@ const ActiveCollector = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  useEffect(() => {
-    console.log("Summary Data:", summaryData); // Log state update for debugging
-  }, [summaryData]);
+  useEffect(() => {}, [summaryData]);
 
   if (error) {
     return <p>{error}</p>;

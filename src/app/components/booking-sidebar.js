@@ -22,14 +22,12 @@ const BookingSidebar = () => {
 
   const fetchDropdownOptions = async () => {
     try {
-      console.log("Fetching dropdown options...");
       const { data, error } = await supabase.rpc("get_liner_dropdown");
 
       if (error) {
         console.error("Error fetching dropdown options:", error.message);
         return;
       }
-      console.log("Fetched dropdown options:", data);
       setDropdownOptions(data || []); // Ensure data is always an array
 
       // Create a map of dropdown options by their ID for quick lookup
@@ -50,7 +48,6 @@ const BookingSidebar = () => {
 
   const fetchBookings = async () => {
     try {
-      console.log("Fetching bookings...");
       const { data, error } = await supabase.rpc(
         "get_sidebar_bookings_for_today_ver2"
       );
@@ -60,7 +57,6 @@ const BookingSidebar = () => {
         setLoading(false);
         return;
       }
-      console.log("Fetched bookings:", data);
       setBookings(data);
 
       // Initialize assigned liners state based on fetched bookings
@@ -103,7 +99,6 @@ const BookingSidebar = () => {
       if (error) {
         console.error("Error updating booking:", error.message);
       } else {
-        console.log("Booking updated successfully.");
       }
     } catch (error) {
       console.error("Unexpected error in handleOptionClick:", error);

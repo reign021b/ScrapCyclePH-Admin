@@ -6,7 +6,6 @@ const CityButtons = () => {
 
   const handleClick = (city) => {
     setActiveCity(city);
-    console.log(`City selected: ${city}`);
   };
 
   return (
