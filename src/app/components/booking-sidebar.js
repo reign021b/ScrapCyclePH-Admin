@@ -96,7 +96,6 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
       if (error) {
         console.error("Error updating booking:", error.message);
       } else {
-        // Optionally refresh bookings or handle post-update logic
       }
     } catch (error) {
       console.error("Unexpected error in handleOptionClick:", error);
@@ -236,7 +235,7 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
           <p className="font-bold m-3 text-black">
             Waste Type: <br />
             <div className="text-gray-500 font-normal mt-1">
-              {selectedBooking["Waste Type"]}
+              {selectedBooking["waste_type"]}
             </div>
           </p>
 
@@ -249,7 +248,7 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
           <p className="font-bold m-3 text-black">
             Item Types: <br />
             <div className="font-normal text-gray-500 mt-1">
-              {selectedBooking["Item Types"]?.join(", ")}
+              {selectedBooking["item_types"]?.join(", ")}
             </div>
           </p>
           <p className="font-bold m-3 text-black">

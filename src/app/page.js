@@ -165,7 +165,11 @@ export default function Home() {
           onClose={handleClose}
         />
         {/* map */}
-        <Map bookings={bookings} setSelectedBookingId={setSelectedBookingId} />
+        <Map
+          bookings={bookings}
+          setSelectedBookingId={setSelectedBookingId}
+          activeCity={activeCity}
+        />
       </div>
     </main>
   );

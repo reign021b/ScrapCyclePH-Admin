@@ -1,11 +1,25 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L, { Icon } from "leaflet";
 import "leaflet/dist/leaflet.css";
 
-const Map = ({ bookings = [], setSelectedBookingId }) => {
-  const center = [8.948061991080413, 125.54020391156156];
+const Map = ({ bookings = [], setSelectedBookingId, activeCity }) => {
+  // Define default center coordinates if needed
+  const defaultCenter = [8.948061991080413, 125.54020391156156]; // Default center
 
+  // Determine the center based on activeCity
+  const center = useMemo(() => {
+    switch (activeCity) {
+      case "Butuan City":
+        return [8.948061991080413, 125.54020391156156];
+      case "Davao City":
+        return [7.093545, 125.599351];
+      default:
+        return defaultCenter; // Fallback to default center if activeCity doesn't match
+    }
+  }, [activeCity]);
+
+  // Define icons using useMemo for performance
   const cancelledIcon = useMemo(
     () =>
       new Icon({
@@ -42,6 +56,7 @@ const Map = ({ bookings = [], setSelectedBookingId }) => {
     []
   );
 
+  // Determine icon based on booking status
   const getIcon = (booking) => {
     if (booking.cancelled) {
       return cancelledIcon;
@@ -52,14 +67,24 @@ const Map = ({ bookings = [], setSelectedBookingId }) => {
     }
   };
 
+  // Handle marker click
   const handleMarkerClick = (bookingId) => {
-    // Pass the bookingId to the parent component
     setSelectedBookingId(bookingId);
   };
+
+  // Debug logs
+  useEffect(() => {
+    console.log("Active City:", activeCity);
+    console.log("Map center:", center);
+  }, [activeCity, center]);
+
+  // Force map component to re-render when center changes
+  const mapKey = `${activeCity}-${center[0]}-${center[1]}`;
 
   return (
     <div className="w-full h-full">
       <MapContainer
+        key={mapKey} // Use a unique key to force remount
         style={{ height: "100%", width: "100%" }}
         center={center}
         zoom={13}

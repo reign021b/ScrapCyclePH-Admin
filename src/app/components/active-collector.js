@@ -51,7 +51,9 @@ const ActiveCollector = ({ activeCity }) => {
   return (
     <>
       {summaryData.length === 0 ? (
-        <p className="text-center">No data available for {activeCity}</p>
+        <p className="mt-5 text-center text-lg">
+          No data available for {activeCity}.
+        </p>
       ) : (
         summaryData.map((item, index) => {
           const totalTrade = item.total_trade?.toFixed(2) ?? "0.00";
