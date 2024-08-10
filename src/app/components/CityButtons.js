@@ -1,9 +1,6 @@
-// src/app/components/CityButtons.js
-import React, { useState } from "react";
+import React from "react";
 
-const CityButtons = () => {
-  const [activeCity, setActiveCity] = useState("Tagum City");
-
+const CityButtons = ({ activeCity, setActiveCity }) => {
   const handleClick = (city) => {
     setActiveCity(city);
   };
@@ -12,21 +9,19 @@ const CityButtons = () => {
     <div className="w-full border-y font-medium bg-white flex">
       <button
         className={`w-full px-7 py-3 border-r ${
-          activeCity === "Tagum City" ? "bg-green-600 text-white" : "bg-white"
+          activeCity === "Butuan City" ? "bg-green-600 text-white" : "bg-white"
         }`}
-        onClick={() => handleClick("Tagum City")}
+        onClick={() => handleClick("Butuan City")}
       >
-        Tagum
+        Butuan
       </button>
       <button
         className={`w-full px-7 py-3 border-r ${
-          activeCity === "Cabadbaran City"
-            ? "bg-green-600 text-white"
-            : "bg-white"
+          activeCity === "Davao City" ? "bg-green-600 text-white" : "bg-white"
         }`}
-        onClick={() => handleClick("Cabadbaran City")}
+        onClick={() => handleClick("Davao City")}
       >
-        Cabadbaran
+        Davao
       </button>
     </div>
   );

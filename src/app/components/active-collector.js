@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { FaCheckCircle, FaPlusCircle, FaRegCircle } from "react-icons/fa";
-import { supabase } from "/utils/supabase/client"; // Adjust path if necessary
+import { supabase } from "/utils/supabase/client";
 
-async function fetchDailyBookingsSummary() {
+async function fetchDailyBookingsSummary(city) {
   try {
     const { data, error } = await supabase.rpc(
-      "get_booking_statistics_for_today"
+      "get_booking_statistics_for_today",
+      {
+        city_name: city, // Pass the city as a parameter
+      }
     );
     if (error) {
       console.error("Error fetching daily bookings summary:", error);
@@ -19,14 +22,14 @@ async function fetchDailyBookingsSummary() {
   }
 }
 
-const ActiveCollector = () => {
+const ActiveCollector = ({ activeCity }) => {
   const [summaryData, setSummaryData] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const getData = async () => {
       try {
-        const data = await fetchDailyBookingsSummary();
+        const data = await fetchDailyBookingsSummary(activeCity);
         setSummaryData(data);
       } catch (err) {
         console.error("Failed to fetch data:", err);
@@ -39,9 +42,7 @@ const ActiveCollector = () => {
 
     // Cleanup interval on component unmount
     return () => clearInterval(intervalId);
-  }, []);
-
-  useEffect(() => {}, [summaryData]);
+  }, [activeCity]); // Re-run the effect when activeCity changes
 
   if (error) {
     return <p>{error}</p>;
@@ -50,7 +51,7 @@ const ActiveCollector = () => {
   return (
     <>
       {summaryData.length === 0 ? (
-        <p className="text-center">No data available</p>
+        <p className="text-center">No data available for {activeCity}</p>
       ) : (
         summaryData.map((item, index) => {
           const totalTrade = item.total_trade?.toFixed(2) ?? "0.00";

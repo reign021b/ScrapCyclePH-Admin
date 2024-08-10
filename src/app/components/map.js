@@ -1,9 +1,9 @@
+import { useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L, { Icon } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { useMemo } from "react";
 
-const Map = ({ bookings = [] }) => {
+const Map = ({ bookings = [], setSelectedBookingId }) => {
   const center = [8.948061991080413, 125.54020391156156];
 
   const cancelledIcon = useMemo(
@@ -53,8 +53,8 @@ const Map = ({ bookings = [] }) => {
   };
 
   const handleMarkerClick = (bookingId) => {
-    // Show an alert with the booking ID
-    alert("Booking ID: " + bookingId);
+    // Pass the bookingId to the parent component
+    setSelectedBookingId(bookingId);
   };
 
   return (

@@ -5,16 +5,19 @@ import BookingSidebar from "./booking-sidebar";
 import UnpaidCollector from "./unpaid-collector";
 import CityButtons from "./CityButtons";
 
-const Sidebar = () => {
+const Sidebar = ({ activeCity, setActiveCity, selectedBookingId, onClose }) => {
   return (
     <div className="min-w-[31rem] max-w-[31rem] border-r flex flex-col justify-between h-full">
-      {/* collectors */}
       <div className="h-screen-sidebar overflow-scroll py-6 overflow-x-clip">
-        {/* active */}
-        <ActiveCollector />
-        <BookingSidebar />
+        {/* Pass activeCity to ActiveCollector */}
+        <ActiveCollector activeCity={activeCity} />
 
-        {/* unpaid */}
+        {/* Pass selectedBookingId to BookingSidebar */}
+        <BookingSidebar
+          selectedBookingId={selectedBookingId}
+          onClose={onClose}
+        />
+
         <button className="hidden w-full justify-between items-center mr-4 mt-6 mb-2 p-2 rounded-lg hover:bg-gray-100">
           <p className="font-semibold">Unpaid (1)</p>
           <FaChevronUp />
@@ -22,9 +25,8 @@ const Sidebar = () => {
 
         <UnpaidCollector />
       </div>
-
       {/* cities */}
-      <CityButtons />
+      <CityButtons activeCity={activeCity} setActiveCity={setActiveCity} />
     </div>
   );
 };

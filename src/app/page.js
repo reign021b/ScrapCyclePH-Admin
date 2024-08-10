@@ -7,7 +7,7 @@ import Image from "next/image";
 import LogoutButton from "./components/Auth/LogoutButton";
 import StatsBar from "./components/StatsBar";
 import Sidebar from "./components/Sidebar";
-import Map from "./components/map";
+import Map from "./components/Map";
 
 export default function Home() {
   const router = useRouter();
@@ -16,9 +16,15 @@ export default function Home() {
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [profilePath, setProfilePath] = useState(null);
   const [bookings, setBookings] = useState([]); // State to store bookings
+  const [activeCity, setActiveCity] = useState("Butuan City"); // State for active city
+  const [selectedBookingId, setSelectedBookingId] = useState(null); // State for selected booking ID
+
+  const handleClose = () => {
+    setSelectedBookingId(null);
+  };
 
   useEffect(() => {
-    const fetchOperatorAndBookings = async (session) => {
+    const fetchOperator = async (session) => {
       try {
         // Fetch operator details including profile_path and is_super_admin
         const { data: operators, error: operatorError } = await supabase
@@ -38,7 +44,6 @@ export default function Home() {
           );
           setProfilePath(cleanedProfilePath);
         }
-
         // Fetch bookings for today
         await fetchBookings();
       } catch (error) {
@@ -50,6 +55,7 @@ export default function Home() {
 
     const fetchBookings = async () => {
       try {
+        // Call the function without parameters
         const { data: bookingsData, error: bookingsError } = await supabase.rpc(
           "get_bookings_for_today"
         );
@@ -58,6 +64,10 @@ export default function Home() {
           throw bookingsError;
         }
 
+        // Log the data correctly
+        console.log(bookingsData);
+
+        // Update state with the fetched data
         setBookings(bookingsData);
       } catch (error) {
         console.error("Error fetching bookings:", error.message);
@@ -72,7 +82,7 @@ export default function Home() {
       if (!session) {
         router.push("/login");
       } else {
-        fetchOperatorAndBookings(session);
+        fetchOperator(session); // Fetch operator details
         // Set up interval to fetch bookings every 8 seconds
         const intervalId = setInterval(fetchBookings, 8000);
 
@@ -125,32 +135,37 @@ export default function Home() {
             height={50}
           />
         </a>
-        <p className="font-semibold">
+        <p className="font-semibold pr-3">
           {operatorName} ({isSuperAdmin ? "Super Admin" : "Admin"})
         </p>
         <Image
           src={
             profilePath ||
             "https://i.pinimg.com/564x/5b/01/dd/5b01dd38126870d000aee1ed5c8daa80.jpg"
-          } // Use profilePath directly
+          }
           alt="Profile picture"
-          height={44}
-          width={44}
-          className="rounded-full ml-4 mr-3"
+          width={50}
+          height={50}
+          className="rounded-full mr-3"
         />
         <LogoutButton className="bg-gray-100 hover:bg-green-50 border border-gray-300 hover:border-green-500 hover:text-green-600" />
       </div>
 
       {/* stats bar */}
-      <StatsBar />
+      <StatsBar activeCity={activeCity} />
 
       {/* body */}
       <div className="flex flex-grow w-full bg-white border-t">
         {/* side bar */}
-        <Sidebar />
+        <Sidebar
+          activeCity={activeCity}
+          setActiveCity={setActiveCity}
+          selectedBookingId={selectedBookingId}
+          setSelectedBookingId={setSelectedBookingId}
+          onClose={handleClose}
+        />
         {/* map */}
-        <Map bookings={bookings} />{" "}
-        {/* Pass bookings data to the Map component */}
+        <Map bookings={bookings} setSelectedBookingId={setSelectedBookingId} />
       </div>
     </main>
   );

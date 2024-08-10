@@ -4,20 +4,20 @@ import DateComponent from "./dateComponent";
 import ProgressBarComponent from "./progressBarComponent";
 import { supabase } from "/utils/supabase/client"; // Adjust the import path as needed
 
-const StatsBar = () => {
+const StatsBar = ({ activeCity }) => {
+  // Accept activeCity as a prop
   const [completedCount, setCompletedCount] = useState(null); // State for completed bookings
   const [cancelledCount, setCancelledCount] = useState(null); // State for cancelled bookings
   const [totalCount, setTotalCount] = useState(null); // State for total bookings
   const [totalSum, setTotalSum] = useState(null); // State for total sum
   const [totalCommission, setTotalCommission] = useState(null); // State for total commission
-  const cityName = "Butuan City"; // Define the city you want to query
 
   const fetchBookingCounts = async () => {
     try {
       // Call the Supabase function to get the total booking count for today
       const { data: totalData, error: totalError } = await supabase.rpc(
         "get_booking_count_for_today",
-        { city_name: cityName }
+        { city_name: activeCity } // Use activeCity here
       );
 
       if (totalError) {
@@ -27,7 +27,7 @@ const StatsBar = () => {
       // Call the Supabase function to get the completed booking count for today
       const { data: completedData, error: completedError } = await supabase.rpc(
         "get_completed_booking_count_for_today",
-        { city_name: cityName }
+        { city_name: activeCity } // Use activeCity here
       );
 
       if (completedError) {
@@ -37,7 +37,7 @@ const StatsBar = () => {
       // Call the Supabase function to get the cancelled booking count for today
       const { data: cancelledData, error: cancelledError } = await supabase.rpc(
         "get_cancelled_booking_count_for_today",
-        { city_name: cityName }
+        { city_name: activeCity } // Use activeCity here
       );
 
       if (cancelledError) {
@@ -47,7 +47,7 @@ const StatsBar = () => {
       // Call the Supabase function to get the total sum for today
       const { data: sumData, error: sumError } = await supabase.rpc(
         "get_total_sum_for_today",
-        { city_name: cityName }
+        { city_name: activeCity } // Use activeCity here
       );
 
       if (sumError) {
@@ -56,9 +56,10 @@ const StatsBar = () => {
 
       // Call the Supabase function to get the total commission for today
       const { data: commissionData, error: commissionError } =
-        await supabase.rpc("get_total_commission_for_today", {
-          city_name: cityName,
-        });
+        await supabase.rpc(
+          "get_total_commission_for_today",
+          { city_name: activeCity } // Use activeCity here
+        );
 
       if (commissionError) {
         throw commissionError;
@@ -84,7 +85,7 @@ const StatsBar = () => {
 
     // Clean up the interval on component unmount
     return () => clearInterval(intervalId);
-  }, [cityName]);
+  }, [activeCity]); // Depend on activeCity
 
   return (
     <div className="bg-white border-t px-4 flex w-full text-sm">
