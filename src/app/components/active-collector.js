@@ -63,7 +63,7 @@ const ActiveCollector = ({ activeCity }) => {
           return (
             <button
               key={index}
-              className="border p-5 mb-4 rounded-md transition duration-100 hover:bg-gray-50 w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 mx-2"
+              className="border p-5 m-4 rounded-md transition duration-100 hover:bg-gray-50 w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 mx-2"
             >
               <div className="flex mb-3">
                 <Image

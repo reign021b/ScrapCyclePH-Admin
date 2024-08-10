@@ -79,11 +79,7 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
   };
 
   const handleOptionClick = async (bookingId, option) => {
-    if (assignedLiners.has(bookingId)) {
-      alert("This booking already has a liner assigned.");
-      return;
-    }
-
+    // Update local state with the new liner assignment
     setSelectedLiners((prev) => ({
       ...prev,
       [bookingId]: option,
@@ -91,6 +87,7 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
     setAssignedLiners((prev) => new Map(prev).set(bookingId, option.id));
 
     try {
+      // Update the booking's liner_id in Supabase
       const { error } = await supabase
         .from("bookings")
         .update({ liner_id: option.id })
@@ -105,6 +102,7 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
       console.error("Unexpected error in handleOptionClick:", error);
     }
 
+    // Close the dropdown menu
     setDropdownOpen(null);
   };
 
@@ -127,7 +125,7 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
   }
 
   return (
-    <div className="booking-sidebar my-5 relative">
+    <div className="booking-sidebar relative">
       <button
         onClick={handleClose}
         className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
