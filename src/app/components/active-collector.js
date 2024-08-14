@@ -3,7 +3,7 @@ import Image from "next/image";
 import { FaCheckCircle, FaPlusCircle, FaRegCircle } from "react-icons/fa";
 import { supabase } from "@/utils/supabase/client";
 
-async function fetchDailyBookingsSummary(city, selectedDate) {
+async function fetchDailyBookingsSummary(city) {
   try {
     const { data, error } = await supabase.rpc(
       "get_booking_statistics_for_today",
@@ -14,16 +14,24 @@ async function fetchDailyBookingsSummary(city, selectedDate) {
     if (error) {
       throw error;
     }
-    // Filter data based on selectedDate
-    const filteredData = data.filter(
-      (item) => item.schedule_date === selectedDate
-    );
-    return filteredData;
+    return data;
   } catch (error) {
     console.error("Unexpected error fetching data:", error);
     return [];
   }
 }
+
+const formatDate = (dateStr) => {
+  const [year, month, day] = dateStr.split("-");
+  const date = new Date(year, month - 1, day);
+  return !isNaN(date.getTime())
+    ? new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }).format(date)
+    : "Invalid Date";
+};
 
 const ActiveCollector = ({ activeCity, selectedDate }) => {
   const [summaryData, setSummaryData] = useState([]);
@@ -32,8 +40,11 @@ const ActiveCollector = ({ activeCity, selectedDate }) => {
   useEffect(() => {
     const getData = async () => {
       try {
-        const data = await fetchDailyBookingsSummary(activeCity, selectedDate);
-        setSummaryData(data);
+        const allData = await fetchDailyBookingsSummary(activeCity);
+        const filteredData = allData.filter(
+          (item) => item.schedule_date === selectedDate
+        );
+        setSummaryData(filteredData);
         setError(null); // Clear any previous errors
       } catch (err) {
         console.error("Failed to fetch data:", err);
@@ -42,10 +53,6 @@ const ActiveCollector = ({ activeCity, selectedDate }) => {
     };
 
     getData();
-    const intervalId = setInterval(getData, 8000);
-
-    // Cleanup interval on component unmount
-    return () => clearInterval(intervalId);
   }, [activeCity, selectedDate]); // Re-run the effect when activeCity or selectedDate changes
 
   if (error) {
@@ -56,20 +63,7 @@ const ActiveCollector = ({ activeCity, selectedDate }) => {
     <>
       {summaryData.length === 0 ? (
         <p className="mt-5 text-center text-lg">
-          No data available for {activeCity} on{" "}
-          {(() => {
-            const [year, month, day] = selectedDate.split("-");
-            const date = new Date(year, month - 1, day);
-            // Check if the date is valid
-            return !isNaN(date.getTime())
-              ? new Intl.DateTimeFormat("en-US", {
-                  month: "long",
-                  day: "numeric",
-                  year: "numeric",
-                }).format(date)
-              : "Invalid Date";
-          })()}
-          .
+          No data available for {activeCity} on {formatDate(selectedDate)}.
         </p>
       ) : (
         summaryData.map((item, index) => {
@@ -123,13 +117,17 @@ const ActiveCollector = ({ activeCity, selectedDate }) => {
                       <div className="mr-4 text-green-600">
                         <FaCheckCircle />
                       </div>
-                      <p>{completedBooking - cancelledBooking}</p>
+                      <p>{completedBooking}</p>
                     </div>
                     <div className="flex flex-grow items-center justify-start">
                       <div className="mr-4 text-gray-400 rotate-45">
                         <FaRegCircle />
                       </div>
-                      <p>{totalNumberOfBookings - completedBooking}</p>
+                      <p>
+                        {totalNumberOfBookings -
+                          completedBooking -
+                          cancelledBooking}
+                      </p>
                     </div>
                     <div className="flex flex-grow items-center justify-start">
                       <div className="mr-4 text-red-600 rotate-45">
@@ -145,7 +143,8 @@ const ActiveCollector = ({ activeCity, selectedDate }) => {
                   className="flex h-full bg-green-600 rounded-full"
                   style={{
                     width:
-                      totalNumberOfBookings > 0
+                      totalNumberOfBookings > 0 &&
+                      completedBooking - cancelledBooking > 0
                         ? `${
                             ((completedBooking - cancelledBooking) /
                               (totalNumberOfBookings - cancelledBooking)) *

@@ -2,120 +2,90 @@ import React, { useEffect, useState } from "react";
 import { FaCheckCircle, FaRegCircle, FaPlusCircle } from "react-icons/fa";
 import DateComponent from "./dateComponent";
 import ProgressBarComponent from "./progressBarComponent";
-import { supabase } from "/utils/supabase/client"; // Adjust the import path as needed
+import { supabase } from "@/utils/supabase/client"; // Adjust the import path as needed
 
-const StatsBar = ({ activeCity, onDateChange }) => {
-  // Accept activeCity as a prop
-  const [completedCount, setCompletedCount] = useState(null); // State for completed bookings
-  const [cancelledCount, setCancelledCount] = useState(null); // State for cancelled bookings
-  const [totalCount, setTotalCount] = useState(null); // State for total bookings
-  const [totalSum, setTotalSum] = useState(null); // State for total sum
-  const [totalCommission, setTotalCommission] = useState(null); // State for total commission
+const StatsBar = ({ activeCity, onDateChange, selectedDate }) => {
+  const [completedCount, setCompletedCount] = useState(null);
+  const [cancelledCount, setCancelledCount] = useState(null);
+  const [totalCount, setTotalCount] = useState(null);
+  const [totalSum, setTotalSum] = useState(null);
+  const [totalCommission, setTotalCommission] = useState(null);
 
   const fetchBookingCounts = async () => {
     try {
-      // Call the Supabase function to get the total booking count for today
-      const { data: totalData, error: totalError } = await supabase.rpc(
-        "get_booking_count_for_today",
-        { city_name: activeCity } // Use activeCity here
-      );
+      const fetchCounts = async (rpcName, column) => {
+        const { data, error } = await supabase.rpc(rpcName, {
+          city_name: activeCity,
+        });
+        if (error) throw error;
 
-      if (totalError) {
-        throw totalError;
-      }
-
-      // Call the Supabase function to get the completed booking count for today
-      const { data: completedData, error: completedError } = await supabase.rpc(
-        "get_completed_booking_count_for_today",
-        { city_name: activeCity } // Use activeCity here
-      );
-
-      if (completedError) {
-        throw completedError;
-      }
-
-      // Call the Supabase function to get the cancelled booking count for today
-      const { data: cancelledData, error: cancelledError } = await supabase.rpc(
-        "get_cancelled_booking_count_for_today",
-        { city_name: activeCity } // Use activeCity here
-      );
-
-      if (cancelledError) {
-        throw cancelledError;
-      }
-
-      // Call the Supabase function to get the total sum for today
-      const { data: sumData, error: sumError } = await supabase.rpc(
-        "get_total_sum_for_today",
-        { city_name: activeCity } // Use activeCity here
-      );
-
-      if (sumError) {
-        throw sumError;
-      }
-
-      // Call the Supabase function to get the total commission for today
-      const { data: commissionData, error: commissionError } =
-        await supabase.rpc(
-          "get_total_commission_for_today",
-          { city_name: activeCity } // Use activeCity here
+        // Filter the data based on the selectedDate
+        const filteredData = data?.filter(
+          (item) => item.schedule_date === selectedDate
         );
 
-      if (commissionError) {
-        throw commissionError;
-      }
+        // Aggregate the filtered data
+        return filteredData.reduce((sum, item) => sum + (item[column] || 0), 0);
+      };
 
-      // Update the state with the results
-      setTotalCount(totalData);
-      setCompletedCount(completedData);
-      setCancelledCount(cancelledData);
-      setTotalSum(sumData);
-      setTotalCommission(commissionData);
+      const [
+        totalCount,
+        completedCount,
+        cancelledCount,
+        totalSum,
+        totalCommission,
+      ] = await Promise.all([
+        fetchCounts("get_booking_count_for_today", "booking_count"),
+        fetchCounts(
+          "get_completed_booking_count_for_today",
+          "completed_booking_count"
+        ),
+        fetchCounts(
+          "get_cancelled_booking_count_for_today",
+          "cancelled_booking_count"
+        ),
+        fetchCounts("get_total_sum_for_today", "total_sum"),
+        fetchCounts("get_total_commission_for_today", "total_commission"),
+      ]);
+
+      setTotalCount(totalCount);
+      setCompletedCount(completedCount);
+      setCancelledCount(cancelledCount);
+      setTotalSum(totalSum);
+      setTotalCommission(totalCommission);
     } catch (error) {
       console.error("Error fetching booking counts:", error.message);
     }
   };
 
   useEffect(() => {
-    // Fetch data initially
     fetchBookingCounts();
-
-    // Set up interval to fetch data every 8 seconds
-    const intervalId = setInterval(fetchBookingCounts, 8000);
-
-    // Clean up the interval on component unmount
-    return () => clearInterval(intervalId);
-  }, [activeCity]); // Depend on activeCity
+  }, [activeCity, selectedDate]); // Fetch data when activeCity or selectedDate changes
 
   return (
     <div className="bg-white border-t px-4 flex w-full text-sm">
-      {/* date picker */}
       <DateComponent onDateChange={onDateChange} />
 
-      {/* progress bar */}
       <ProgressBarComponent
         completedCount={completedCount}
         totalCount={totalCount}
         cancelledCount={cancelledCount}
       />
 
-      {/* other details */}
       <div className="flex items-center justify-center w-24 border-r">
         <div className="mr-4 text-lg text-green-600">
           <FaCheckCircle />
         </div>
-        <p>
-          {completedCount !== null
-            ? completedCount - cancelledCount
-            : "Loading..."}
-        </p>
+        <p>{completedCount !== null ? completedCount : "Loading..."}</p>
       </div>
       <div className="flex items-center justify-center w-24 border-r">
         <div className="mr-4 text-lg text-gray-400 rotate-45">
           <FaRegCircle />
         </div>
         <p>
-          {totalCount !== null ? totalCount - completedCount : "Loading..."}
+          {totalCount !== null
+            ? totalCount - completedCount - cancelledCount
+            : "Loading..."}
         </p>
       </div>
       <div className="flex items-center justify-center w-24 border-r">

@@ -163,7 +163,11 @@ export default function Home() {
       </div>
 
       {/* stats bar */}
-      <StatsBar activeCity={activeCity} onDateChange={handleDateChange} />
+      <StatsBar
+        activeCity={activeCity}
+        onDateChange={handleDateChange}
+        selectedDate={selectedDate}
+      />
 
       {/* body */}
       <div className="flex flex-grow w-full bg-white border-t">
