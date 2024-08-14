@@ -25,7 +25,7 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity }) => {
       new Icon({
         iconUrl:
           "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/cancelled-gif.gif",
-        iconSize: [32, 35],
+        iconSize: [32, 32],
         iconAnchor: [16, 32],
         popupAnchor: [0, -32],
       }),
@@ -37,7 +37,7 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity }) => {
       new Icon({
         iconUrl:
           "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/completed-gif.gif",
-        iconSize: [32, 35],
+        iconSize: [35, 40],
         iconAnchor: [16, 32],
         popupAnchor: [0, -32],
       }),
@@ -49,8 +49,20 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity }) => {
       new Icon({
         iconUrl:
           "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/pending-gif-2.gif",
-        iconSize: [32, 35],
+        iconSize: [35, 38],
         iconAnchor: [16, 32],
+        popupAnchor: [0, -32],
+      }),
+    []
+  );
+
+  const assignIcon = useMemo(
+    () =>
+      new Icon({
+        iconUrl:
+          "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/assign-liner.gif",
+        iconSize: [42, 40],
+        iconAnchor: [26, 42],
         popupAnchor: [0, -32],
       }),
     []
@@ -58,9 +70,11 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity }) => {
 
   // Determine icon based on booking status
   const getIcon = (booking) => {
-    if (booking.cancelled) {
+    if (booking.cancelled === true) {
       return cancelledIcon;
-    } else if (booking.status) {
+    } else if (booking.liner_id === null) {
+      return assignIcon;
+    } else if (booking.status === "true") {
       return completedIcon;
     } else {
       return pendingIcon;

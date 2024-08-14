@@ -6,19 +6,23 @@ import ProfileImage from "./ProfileImage";
 const BookingSidebar = ({ selectedBookingId, onClose }) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [dropdownOpen, setDropdownOpen] = useState(null); // Store open state for specific booking
-  const [selectedLiners, setSelectedLiners] = useState({}); // Map to track selected liners per booking
-  const [assignedLiners, setAssignedLiners] = useState(new Map()); // Track assigned liners per booking
+  const [dropdownOpen, setDropdownOpen] = useState(null);
+  const [selectedLiners, setSelectedLiners] = useState({});
+  const [assignedLiners, setAssignedLiners] = useState(new Map());
   const [dropdownOptions, setDropdownOptions] = useState([]);
 
   useEffect(() => {
-    fetchDropdownOptions(); // Initial fetch
-    fetchBookings(); // Fetch bookings initially
+    fetchDropdownOptions(); // Initial fetch for dropdown options
+    fetchBookings(); // Initial fetch for bookings
 
-    const intervalId = setInterval(fetchDropdownOptions, 8000); // Fetch dropdown options every 8 seconds
+    const dropdownIntervalId = setInterval(fetchDropdownOptions, 8000);
+    const bookingsIntervalId = setInterval(fetchBookings, 8000);
 
-    return () => clearInterval(intervalId); // Cleanup interval on component unmount
-  }, []); // Empty dependency array means this runs once on mount
+    return () => {
+      clearInterval(dropdownIntervalId);
+      clearInterval(bookingsIntervalId);
+    };
+  }, []);
 
   const fetchDropdownOptions = async () => {
     try {
@@ -28,9 +32,9 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
         console.error("Error fetching dropdown options:", error.message);
         return;
       }
-      setDropdownOptions(data || []); // Ensure data is always an array
+      setDropdownOptions(data || []);
 
-      // Create a map of dropdown options by their ID for quick lookup
+      // Create a map of dropdown options by their ID
       const dropdownMap = new Map(data.map((option) => [option.id, option]));
       setSelectedLiners((prevLiners) => {
         const updatedLiners = { ...prevLiners };
@@ -59,7 +63,6 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
       }
       setBookings(data);
 
-      // Initialize assigned liners state based on fetched bookings
       const linersMap = new Map();
       data.forEach((booking) => {
         if (booking.liner_id) {
@@ -79,7 +82,6 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
   };
 
   const handleOptionClick = async (bookingId, option) => {
-    // Update local state with the new liner assignment
     setSelectedLiners((prev) => ({
       ...prev,
       [bookingId]: option,
@@ -87,7 +89,6 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
     setAssignedLiners((prev) => new Map(prev).set(bookingId, option.id));
 
     try {
-      // Update the booking's liner_id in Supabase
       const { error } = await supabase
         .from("bookings")
         .update({ liner_id: option.id })
@@ -95,13 +96,11 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
 
       if (error) {
         console.error("Error updating booking:", error.message);
-      } else {
       }
     } catch (error) {
       console.error("Unexpected error in handleOptionClick:", error);
     }
 
-    // Close the dropdown menu
     setDropdownOpen(null);
   };
 
@@ -141,7 +140,7 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
               {selectedBooking.full_name}
             </h3>
             <p className="text-sm text-gray-500 w-full">
-              Phone: {selectedBooking["Phone Number"]}
+              Phone: {selectedBooking["phone_number"]}
             </p>
           </div>
         </div>
@@ -155,26 +154,29 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
             onClick={() => handleDropdownClick(selectedBooking.id)}
           >
             <span className="mr-2">
-              {selectedLiners[selectedBooking.id]
-                ? `${selectedLiners[selectedBooking.id].full_name} (${
-                    selectedLiners[selectedBooking.id].business_name
-                  })`
-                : assignedLiners.has(selectedBooking.id)
-                ? `${
-                    dropdownOptions.find(
-                      (option) =>
-                        option.id === assignedLiners.get(selectedBooking.id)
-                    )?.full_name || "Unknown"
-                  } (${
-                    dropdownOptions.find(
-                      (option) =>
-                        option.id === assignedLiners.get(selectedBooking.id)
-                    )?.business_name || "Unknown"
-                  })`
-                : "Assign Liner"}
+              {(() => {
+                // Get the current liner based on selectedBookingId
+                const currentLiner = selectedLiners[selectedBooking.id];
+                const assignedLinerId = assignedLiners.get(selectedBooking.id);
+                const assignedLiner = dropdownOptions.find(
+                  (option) => option.id === assignedLinerId
+                );
+
+                // Determine button text based on available information
+                if (currentLiner) {
+                  return `${currentLiner.full_name} (${currentLiner.business_name})`;
+                }
+                if (assignedLiner) {
+                  return `${assignedLiner.full_name || "Unknown"} (${
+                    assignedLiner.business_name || "Unknown"
+                  })`;
+                }
+                return "Assign Liner";
+              })()}
             </span>
             <FaChevronDown className="w-4 h-4" />
           </button>
+
           {dropdownOpen === selectedBooking.id && (
             <div className="absolute w-1/2 bg-white border rounded-lg shadow-lg mt-1 z-10">
               <ul>
@@ -196,9 +198,9 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
 
         <div
           className={`my-2 p-3 w-full grid grid-cols-2 pr-16 mb-5 ${
-            selectedBooking.cancelled
+            selectedBooking.cancelled === true
               ? "bg-red-50"
-              : selectedBooking.status
+              : selectedBooking.status === "true"
               ? "bg-green-50"
               : "bg-yellow-50"
           }`}
@@ -206,22 +208,22 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
           <div className="font-semibold text-black text-right mr-3">STATUS</div>
           <p
             className={`${
-              selectedBooking.cancelled
+              selectedBooking.cancelled === true
                 ? "text-red-500"
-                : selectedBooking.status
+                : selectedBooking.status === "true"
                 ? "text-green-500"
                 : "text-orange-500"
             } text-[13px] grid w-fit px-8 font-semibold text-left rounded-full ${
-              selectedBooking.cancelled
+              selectedBooking.cancelled === true
                 ? "bg-red-100"
-                : selectedBooking.status
+                : selectedBooking.status === "true"
                 ? "bg-green-100"
                 : "bg-orange-100"
-            } w--fit justify-left items-center`}
+            } justify-left items-center`}
           >
-            {selectedBooking.cancelled
+            {selectedBooking.cancelled === true
               ? "Cancelled"
-              : selectedBooking.status
+              : selectedBooking.status === "true"
               ? "Completed"
               : "Incomplete"}
           </p>

@@ -15,12 +15,18 @@ export default function Home() {
   const [operatorName, setOperatorName] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [profilePath, setProfilePath] = useState(null);
-  const [bookings, setBookings] = useState([]); // State to store bookings
+  const [allBookings, setAllBookings] = useState([]); // Store all bookings
+  const [filteredBookings, setFilteredBookings] = useState([]); // Store filtered bookings
   const [activeCity, setActiveCity] = useState("Butuan City"); // State for active city
   const [selectedBookingId, setSelectedBookingId] = useState(null); // State for selected booking ID
+  const [selectedDate, setSelectedDate] = useState(""); // State for selected date
 
   const handleClose = () => {
     setSelectedBookingId(null);
+  };
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
   };
 
   useEffect(() => {
@@ -64,11 +70,8 @@ export default function Home() {
           throw bookingsError;
         }
 
-        // Log the data correctly
-        console.log(bookingsData);
-
         // Update state with the fetched data
-        setBookings(bookingsData);
+        setAllBookings(bookingsData);
       } catch (error) {
         console.error("Error fetching bookings:", error.message);
       }
@@ -119,6 +122,14 @@ export default function Home() {
     };
   }, [router]);
 
+  useEffect(() => {
+    // Filter bookings by selected date whenever `allBookings` or `selectedDate` changes
+    const filtered = allBookings.filter((booking) =>
+      booking.schedule.startsWith(selectedDate)
+    );
+    setFilteredBookings(filtered);
+  }, [allBookings, selectedDate]);
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -152,7 +163,7 @@ export default function Home() {
       </div>
 
       {/* stats bar */}
-      <StatsBar activeCity={activeCity} />
+      <StatsBar activeCity={activeCity} onDateChange={handleDateChange} />
 
       {/* body */}
       <div className="flex flex-grow w-full bg-white border-t">
@@ -162,11 +173,12 @@ export default function Home() {
           setActiveCity={setActiveCity}
           selectedBookingId={selectedBookingId}
           setSelectedBookingId={setSelectedBookingId}
+          selectedDate={selectedDate}
           onClose={handleClose}
         />
         {/* map */}
         <Map
-          bookings={bookings}
+          bookings={filteredBookings} // Pass filtered bookings to the map
           setSelectedBookingId={setSelectedBookingId}
           activeCity={activeCity}
         />

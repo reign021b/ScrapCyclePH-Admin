@@ -4,7 +4,7 @@ import DateComponent from "./dateComponent";
 import ProgressBarComponent from "./progressBarComponent";
 import { supabase } from "/utils/supabase/client"; // Adjust the import path as needed
 
-const StatsBar = ({ activeCity }) => {
+const StatsBar = ({ activeCity, onDateChange }) => {
   // Accept activeCity as a prop
   const [completedCount, setCompletedCount] = useState(null); // State for completed bookings
   const [cancelledCount, setCancelledCount] = useState(null); // State for cancelled bookings
@@ -90,7 +90,7 @@ const StatsBar = ({ activeCity }) => {
   return (
     <div className="bg-white border-t px-4 flex w-full text-sm">
       {/* date picker */}
-      <DateComponent />
+      <DateComponent onDateChange={onDateChange} />
 
       {/* progress bar */}
       <ProgressBarComponent
@@ -128,7 +128,10 @@ const StatsBar = ({ activeCity }) => {
         <div className="mr-4 font-semibold">Trades</div>
         <p>
           {totalSum !== null
-            ? `PHP ${totalSum.toLocaleString()}`
+            ? `PHP ${totalSum.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}`
             : "Loading..."}
         </p>
       </div>
@@ -136,7 +139,10 @@ const StatsBar = ({ activeCity }) => {
         <div className="mr-4 font-semibold">Comm.</div>
         <p>
           {totalCommission !== null
-            ? `PHP ${totalCommission.toLocaleString()}`
+            ? `PHP ${totalCommission.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}`
             : "Loading..."}
         </p>
       </div>
