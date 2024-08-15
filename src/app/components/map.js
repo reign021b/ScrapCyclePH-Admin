@@ -87,10 +87,7 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity }) => {
   };
 
   // Debug logs
-  useEffect(() => {
-    console.log("Active City:", activeCity);
-    console.log("Map center:", center);
-  }, [activeCity, center]);
+  useEffect(() => {}, [activeCity, center]);
 
   // Force map component to re-render when center changes
   const mapKey = `${activeCity}-${center[0]}-${center[1]}`;

@@ -35,11 +35,13 @@ const formatDate = (dateStr) => {
 
 const ActiveCollector = ({ activeCity, selectedDate }) => {
   const [summaryData, setSummaryData] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const getData = async () => {
       try {
+        setLoading(true); // Start loading
         const allData = await fetchDailyBookingsSummary(activeCity);
         const filteredData = allData.filter(
           (item) => item.schedule_date === selectedDate
@@ -49,11 +51,17 @@ const ActiveCollector = ({ activeCity, selectedDate }) => {
       } catch (err) {
         console.error("Failed to fetch data:", err);
         setError("Failed to fetch data.");
+      } finally {
+        setLoading(false); // Stop loading
       }
     };
 
     getData();
   }, [activeCity, selectedDate]); // Re-run the effect when activeCity or selectedDate changes
+
+  if (loading) {
+    return <p className="text-center mt-5">Loading data...</p>;
+  }
 
   if (error) {
     return <p className="text-red-600 text-center mt-5">{error}</p>;
@@ -143,10 +151,9 @@ const ActiveCollector = ({ activeCity, selectedDate }) => {
                   className="flex h-full bg-green-600 rounded-full"
                   style={{
                     width:
-                      totalNumberOfBookings > 0 &&
-                      completedBooking - cancelledBooking > 0
+                      totalNumberOfBookings > 0 && completedBooking > 0
                         ? `${
-                            ((completedBooking - cancelledBooking) /
+                            (completedBooking /
                               (totalNumberOfBookings - cancelledBooking)) *
                             100
                           }%`

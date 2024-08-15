@@ -50,14 +50,6 @@ const DateComponent = ({ onDateChange }) => {
       <div
         className={`px-3 py-1 flex items-center mr-2 rounded-full border font-bold ${classNames}`}
       >
-        <div className="relative w-3 h-3 mr-2">
-          <div
-            className={`absolute w-3 h-3 animate-ping rounded-full ${pingColor}`}
-          />
-          <div
-            className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 animate-pulse rounded-full ${pingColor}`}
-          />
-        </div>
         <p>{text}</p>
       </div>
       <DatePicker
