@@ -3,11 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
-import Image from "next/image";
-import LogoutButton from "./components/Auth/LogoutButton";
 import StatsBar from "./components/StatsBar";
 import Sidebar from "./components/Sidebar";
 import Map from "./components/Map";
+import AppBar from "./components/AppBar";
 
 export default function Home() {
   const router = useRouter();
@@ -15,11 +14,11 @@ export default function Home() {
   const [operatorName, setOperatorName] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [profilePath, setProfilePath] = useState(null);
-  const [allBookings, setAllBookings] = useState([]); // Store all bookings
-  const [filteredBookings, setFilteredBookings] = useState([]); // Store filtered bookings
-  const [activeCity, setActiveCity] = useState("Butuan City"); // State for active city
-  const [selectedBookingId, setSelectedBookingId] = useState(null); // State for selected booking ID
-  const [selectedDate, setSelectedDate] = useState(""); // State for selected date
+  const [allBookings, setAllBookings] = useState([]);
+  const [filteredBookings, setFilteredBookings] = useState([]);
+  const [activeCity, setActiveCity] = useState("Butuan City");
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
+  const [selectedDate, setSelectedDate] = useState("");
 
   const handleClose = () => {
     setSelectedBookingId(null);
@@ -32,12 +31,11 @@ export default function Home() {
   useEffect(() => {
     const fetchOperator = async (session) => {
       try {
-        // Fetch operator details including profile_path and is_super_admin
         const { data: operators, error: operatorError } = await supabase
           .from("operators")
           .select("name, is_super_admin, profile_path")
           .eq("id", session.user.id)
-          .single(); // Use .single() if you expect only one row
+          .single();
 
         if (operatorError) {
           console.error("Error fetching operator:", operatorError);
@@ -50,7 +48,7 @@ export default function Home() {
           );
           setProfilePath(cleanedProfilePath);
         }
-        // Fetch bookings for today
+
         await fetchBookings();
       } catch (error) {
         console.error("Error fetching data:", error);
@@ -61,7 +59,6 @@ export default function Home() {
 
     const fetchBookings = async () => {
       try {
-        // Call the function without parameters
         const { data: bookingsData, error: bookingsError } = await supabase.rpc(
           "get_bookings_for_today"
         );
@@ -70,7 +67,6 @@ export default function Home() {
           throw bookingsError;
         }
 
-        // Update state with the fetched data
         setAllBookings(bookingsData);
       } catch (error) {
         console.error("Error fetching bookings:", error.message);
@@ -85,18 +81,15 @@ export default function Home() {
       if (!session) {
         router.push("/login");
       } else {
-        fetchOperator(session); // Fetch operator details
-        // Set up interval to fetch bookings every 8 seconds
+        fetchOperator(session);
         const intervalId = setInterval(fetchBookings, 8000);
 
-        // Cleanup interval on component unmount
         return () => clearInterval(intervalId);
       }
     };
 
     checkUser();
 
-    // Subscribe to real-time changes in the 'operators' table
     const channel = supabase
       .channel("operators")
       .on(
@@ -116,14 +109,12 @@ export default function Home() {
       )
       .subscribe();
 
-    // Cleanup subscription on component unmount
     return () => {
       supabase.removeChannel(channel);
     };
   }, [router]);
 
   useEffect(() => {
-    // Filter bookings by selected date whenever `allBookings` or `selectedDate` changes
     const filtered = allBookings.filter((booking) =>
       booking.schedule.startsWith(selectedDate)
     );
@@ -135,43 +126,20 @@ export default function Home() {
   }
 
   return (
-    <main className="flex h-screen overflow-y-clip flex-col items-center text-slate-600 overflow-x-hidden">
-      {/* app bar */}
-      <div className="flex items-center w-screen px-4 bg-white">
-        <a href="/" className="mr-auto">
-          <Image
-            src={`/scrapcycle-logo.png`}
-            alt="Scrapcycle logo"
-            width={230}
-            height={50}
-          />
-        </a>
-        <p className="font-semibold pr-3">
-          {operatorName} ({isSuperAdmin ? "Super Admin" : "Admin"})
-        </p>
-        <Image
-          src={
-            profilePath ||
-            "https://i.pinimg.com/564x/5b/01/dd/5b01dd38126870d000aee1ed5c8daa80.jpg"
-          }
-          alt="Profile picture"
-          width={50}
-          height={50}
-          className="rounded-full mr-3"
-        />
-        <LogoutButton className="bg-gray-100 hover:bg-green-50 border border-gray-300 hover:border-green-500 hover:text-green-600" />
-      </div>
+    <main className="flex h-screen overflow-y-clip flex-col justify-between items-center text-slate-600 overflow-x-hidden">
+      <AppBar
+        operatorName={operatorName}
+        isSuperAdmin={isSuperAdmin}
+        profilePath={profilePath}
+      />
 
-      {/* stats bar */}
       <StatsBar
         activeCity={activeCity}
         onDateChange={handleDateChange}
         selectedDate={selectedDate}
       />
 
-      {/* body */}
       <div className="flex flex-grow w-full bg-white border-t">
-        {/* side bar */}
         <Sidebar
           activeCity={activeCity}
           setActiveCity={setActiveCity}
@@ -180,9 +148,8 @@ export default function Home() {
           selectedDate={selectedDate}
           onClose={handleClose}
         />
-        {/* map */}
         <Map
-          bookings={filteredBookings} // Pass filtered bookings to the map
+          bookings={filteredBookings}
           setSelectedBookingId={setSelectedBookingId}
           activeCity={activeCity}
         />
