@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
 import AppBar from "/src/app/components/AppBar";
 import { FaCalendarAlt, FaMapMarkerAlt } from "react-icons/fa";
 import PieChart from "../components/PieChart";
 import DatePicker from "react-datepicker";
-import { format } from "date-fns"; // Import the format function
+import { format, parseISO } from "date-fns"; // Import the format function
 import "react-datepicker/dist/react-datepicker.css";
 
 export default function Dashboard() {
@@ -23,6 +23,9 @@ export default function Dashboard() {
   const [totalCommission, setTotalCommission] = useState(0);
   const [totalBookingFee, setTotalBookingFee] = useState(0);
   const [totalPenalties, setTotalPenalties] = useState(0);
+  const [totalReceivables, setTotalReceivables] = useState(0);
+  const [recentPayments, setRecentPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -151,6 +154,66 @@ export default function Dashboard() {
       }
     };
 
+    const fetchTotalReceivables = async () => {
+      try {
+        const formattedMonth = format(startDate, "yyyy-MM");
+        const { data, error } = await supabase.rpc(
+          "get_total_receivables_for_dashboard"
+        );
+        if (error) throw error;
+
+        // Filter the data based on selected city and month
+        const filteredData = data.filter(
+          (item) => item.city === selectedCity && item.month === formattedMonth
+        );
+
+        // Calculate the total receivables for the selected city and month
+        const total = filteredData.reduce(
+          (acc, item) => acc + parseFloat(item.total_receivables || 0),
+          0
+        );
+        setTotalReceivables(total);
+      } catch (error) {
+        console.error("Error fetching total receivables:", error);
+        setTotalReceivables(0); // Default to 0 in case of error
+      }
+    };
+
+    const fetchTotalRecentPayments = async () => {
+      try {
+        setLoading(true); // Set loading to true before fetching
+        const formattedMonth = format(startDate, "yyyy-MM");
+        const { data, error } = await supabase.rpc(
+          "get_total_recent_payments_for_dashboard"
+        );
+        if (error) throw error;
+
+        // Filter, sort, and format the data
+        const filteredData = data.filter(
+          (item) => item.city === selectedCity && item.month === formattedMonth
+        );
+        const sortedPayments = filteredData.sort(
+          (a, b) => new Date(b.datetime) - new Date(a.datetime)
+        );
+        const formattedPayments = sortedPayments.map((payment) => ({
+          junkshop: payment.junkshop,
+          datetime: format(
+            parseISO(payment.datetime),
+            "MMMM d, yyyy @ hh:mm a"
+          ),
+          total_amount: payment.total_amount,
+        }));
+
+        setRecentPayments(formattedPayments);
+      } catch (error) {
+        console.error("Error fetching recent payments:", error);
+      } finally {
+        setLoading(false); // Set loading to false after fetching
+      }
+    };
+
+    fetchTotalRecentPayments();
+
     const checkUser = async () => {
       const {
         data: { session },
@@ -163,7 +226,9 @@ export default function Dashboard() {
         fetchTotalPayments();
         fetchTotalCommission();
         fetchTotalBookingFee();
-        fetchTotalPenalties(); // Fetch total penalties when user is authenticated
+        fetchTotalPenalties();
+        fetchTotalReceivables(); // Fetch total receivables when user is authenticated
+        fetchTotalRecentPayments(); // Fetch recent payments data
       }
     };
 
@@ -264,7 +329,7 @@ export default function Dashboard() {
                     <p className="text-xs">
                       This is your overview of this month&apos;s performance.
                     </p>
-                    <div className="flex items-end">
+                    <div className="flex items-end justify-between">
                       <p className="text-3xl font-semibold">
                         {(() => {
                           const [integerPart, decimalPart] = totalCommission
@@ -278,34 +343,36 @@ export default function Dashboard() {
                           );
                         })()}
                       </p>
-                      <div className="ml-4 pt-[20px]">
-                        <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-green-600  w-[24px]">
-                          &nbsp;
+                      <div className="flex items-end">
+                        <div className="ml-4 pt-[20px]">
+                          <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-green-600  w-[24px]">
+                            &nbsp;
+                          </div>
                         </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[32px] bg-gray-300 hover:bg-green-600 w-[24px]">
-                          &nbsp;
+                        <div className="ml-2 pt-[20px]">
+                          <div className="rounded-lg h-[32px] bg-gray-300 hover:bg-green-600 w-[24px]">
+                            &nbsp;
+                          </div>
                         </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-green-600 w-[24px]">
-                          &nbsp;
+                        <div className="ml-2 pt-[20px]">
+                          <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-green-600 w-[24px]">
+                            &nbsp;
+                          </div>
                         </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-green-600 w-[24px]">
-                          &nbsp;
+                        <div className="ml-2 pt-[20px]">
+                          <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-green-600 w-[24px]">
+                            &nbsp;
+                          </div>
                         </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-green-600 w-[24px]">
-                          &nbsp;
+                        <div className="ml-2 pt-[20px]">
+                          <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-green-600 w-[24px]">
+                            &nbsp;
+                          </div>
                         </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[66px] bg-green-600 hover:bg-green-600 w-[24px]">
-                          &nbsp;
+                        <div className="ml-2 pt-[20px]">
+                          <div className="rounded-lg h-[66px] bg-green-600 hover:bg-green-600 w-[24px]">
+                            &nbsp;
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -336,7 +403,7 @@ export default function Dashboard() {
                     <p className="text-xs">
                       This is your overview of this month&apos;s performance.
                     </p>
-                    <div className="flex items-end">
+                    <div className="flex items-end justify-between">
                       <p className="text-3xl font-semibold">
                         {(() => {
                           const [integerPart, decimalPart] = totalBookingFee
@@ -350,34 +417,36 @@ export default function Dashboard() {
                           );
                         })()}
                       </p>
-                      <div className="ml-4 pt-[20px]">
-                        <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-blue-500  w-[24px]">
-                          &nbsp;
+                      <div className="flex items-end">
+                        <div className="ml-4 pt-[20px]">
+                          <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-blue-500  w-[24px]">
+                            &nbsp;
+                          </div>
                         </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[32px] bg-gray-300 hover:bg-blue-500 w-[24px]">
-                          &nbsp;
+                        <div className="ml-2 pt-[20px]">
+                          <div className="rounded-lg h-[32px] bg-gray-300 hover:bg-blue-500 w-[24px]">
+                            &nbsp;
+                          </div>
                         </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-blue-500 w-[24px]">
-                          &nbsp;
+                        <div className="ml-2 pt-[20px]">
+                          <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-blue-500 w-[24px]">
+                            &nbsp;
+                          </div>
                         </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-blue-500 w-[24px]">
-                          &nbsp;
+                        <div className="ml-2 pt-[20px]">
+                          <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-blue-500 w-[24px]">
+                            &nbsp;
+                          </div>
                         </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-blue-500 w-[24px]">
-                          &nbsp;
+                        <div className="ml-2 pt-[20px]">
+                          <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-blue-500 w-[24px]">
+                            &nbsp;
+                          </div>
                         </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[66px] bg-blue-500 hover:bg-blue-500 w-[24px]">
-                          &nbsp;
+                        <div className="ml-2 pt-[20px]">
+                          <div className="rounded-lg h-[66px] bg-blue-500 hover:bg-blue-500 w-[24px]">
+                            &nbsp;
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -408,7 +477,7 @@ export default function Dashboard() {
                   <p className="text-xs">
                     This is your overview of this month&apos;s performance.
                   </p>
-                  <div className="flex items-end">
+                  <div className="flex items-end justify-between">
                     <p className="text-3xl font-semibold pb-2">
                       {(() => {
                         const [integerPart, decimalPart] = totalPenalties
@@ -422,34 +491,36 @@ export default function Dashboard() {
                         );
                       })()}
                     </p>
-                    <div className="ml-4 pt-[20px]">
-                      <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-red-600  w-[24px]">
-                        &nbsp;
+                    <div className="flex items-end justify-between">
+                      <div className="ml-4 pt-[20px]">
+                        <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-red-600  w-[24px]">
+                          &nbsp;
+                        </div>
                       </div>
-                    </div>
-                    <div className="ml-2 pt-[20px]">
-                      <div className="rounded-lg h-[32px] bg-gray-300 hover:bg-red-600 w-[24px]">
-                        &nbsp;
+                      <div className="ml-2 pt-[20px]">
+                        <div className="rounded-lg h-[32px] bg-gray-300 hover:bg-red-600 w-[24px]">
+                          &nbsp;
+                        </div>
                       </div>
-                    </div>
-                    <div className="ml-2 pt-[20px]">
-                      <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-red-600 w-[24px]">
-                        &nbsp;
+                      <div className="ml-2 pt-[20px]">
+                        <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-red-600 w-[24px]">
+                          &nbsp;
+                        </div>
                       </div>
-                    </div>
-                    <div className="ml-2 pt-[20px]">
-                      <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-red-600 w-[24px]">
-                        &nbsp;
+                      <div className="ml-2 pt-[20px]">
+                        <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-red-600 w-[24px]">
+                          &nbsp;
+                        </div>
                       </div>
-                    </div>
-                    <div className="ml-2 pt-[20px]">
-                      <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-red-600 w-[24px]">
-                        &nbsp;
+                      <div className="ml-2 pt-[20px]">
+                        <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-red-600 w-[24px]">
+                          &nbsp;
+                        </div>
                       </div>
-                    </div>
-                    <div className="ml-2 pt-[20px]">
-                      <div className="rounded-lg h-[66px] bg-red-600 hover:bg-red-600 w-[24px]">
-                        &nbsp;
+                      <div className="ml-2 pt-[20px]">
+                        <div className="rounded-lg h-[66px] bg-red-600 hover:bg-red-600 w-[24px]">
+                          &nbsp;
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -483,7 +554,12 @@ export default function Dashboard() {
             <div className="cols-span-1 w-full border rounded-b-xl border-t-0 mr-5 pt-3">
               <div className="px-3 pb-3 w-full flex items-center justify-center">
                 <div>
-                  <PieChart />
+                  <PieChart
+                    totalPayments={totalPayments}
+                    totalCommission={totalCommission}
+                    totalBookingFee={totalBookingFee}
+                    totalPenalties={totalPenalties}
+                  />
                 </div>
               </div>
             </div>
@@ -497,38 +573,50 @@ export default function Dashboard() {
                   <p className="text-xs">
                     This is your overview of this month&apos;s performance.
                   </p>
-                  <div className="flex items-end">
-                    <p className="text-3xl font-semibold items pt-[49px]">
-                      ₱ 523,000<span className="text-lg">.00</span>
+                  <div className="flex items-end justify-between">
+                    <p className="text-3xl font-semibold pb-2">
+                      {(() => {
+                        const [integerPart, decimalPart] = totalReceivables
+                          .toFixed(2)
+                          .split(".");
+                        return (
+                          <>
+                            ₱ {integerPart.toLocaleString()}
+                            <span className="text-lg">.{decimalPart}</span>
+                          </>
+                        );
+                      })()}
                     </p>
-                    <div className="ml-4 pt-[20px]">
-                      <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-yellow-400  w-[24px]">
-                        &nbsp;
+                    <div className="flex items-end">
+                      <div className="ml-4 pt-[20px]">
+                        <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-yellow-400  w-[24px]">
+                          &nbsp;
+                        </div>
                       </div>
-                    </div>
-                    <div className="ml-2 pt-[20px]">
-                      <div className="rounded-lg h-[32px] bg-gray-300 hover:bg-yellow-400 w-[24px]">
-                        &nbsp;
+                      <div className="ml-2 pt-[20px]">
+                        <div className="rounded-lg h-[32px] bg-gray-300 hover:bg-yellow-400 w-[24px]">
+                          &nbsp;
+                        </div>
                       </div>
-                    </div>
-                    <div className="ml-2 pt-[20px]">
-                      <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-yellow-400 w-[24px]">
-                        &nbsp;
+                      <div className="ml-2 pt-[20px]">
+                        <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-yellow-400 w-[24px]">
+                          &nbsp;
+                        </div>
                       </div>
-                    </div>
-                    <div className="ml-2 pt-[20px]">
-                      <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-yellow-400 w-[24px]">
-                        &nbsp;
+                      <div className="ml-2 pt-[20px]">
+                        <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-yellow-400 w-[24px]">
+                          &nbsp;
+                        </div>
                       </div>
-                    </div>
-                    <div className="ml-2 pt-[20px]">
-                      <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-yellow-400 w-[24px]">
-                        &nbsp;
+                      <div className="ml-2 pt-[20px]">
+                        <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-yellow-400 w-[24px]">
+                          &nbsp;
+                        </div>
                       </div>
-                    </div>
-                    <div className="ml-2 pt-[20px]">
-                      <div className="rounded-lg h-[66px] bg-yellow-400 hover:bg-yellow-400 w-[24px]">
-                        &nbsp;
+                      <div className="ml-2 pt-[20px]">
+                        <div className="rounded-lg h-[66px] bg-yellow-400 hover:bg-yellow-400 w-[24px]">
+                          &nbsp;
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -568,126 +656,32 @@ export default function Dashboard() {
                 <div className="text-center">Amount</div>
               </div>
             </div>
-            <div className="grid grid-cols-3 border border-t-0 rounded-b-xl text-[11px] justify-center font-bold h-[564px]">
-              <div className="w-full col-span-1 py-3">
-                <div className="pl-5">RC Junkshop</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center w-full">
-                  July 29, 2024 @ 12:30 PM
+            <div className="grid grid-cols-3 border border-t-0 rounded-b-xl text-[11px] justify-center font-bold h-[564px] overflow-y-auto">
+              {loading ? (
+                <div className="col-span-3 text-center py-3">Loading...</div>
+              ) : recentPayments.length > 0 ? (
+                recentPayments.map((payment, index) => (
+                  <React.Fragment key={index}>
+                    <div className="w-full col-span-1 py-3">
+                      <div className="pl-5">{payment.junkshop}</div>
+                    </div>
+                    <div className="w-full col-span-1 py-3">
+                      <div className="text-center w-full">
+                        {payment.datetime}
+                      </div>
+                    </div>
+                    <div className="w-full col-span-1 py-3">
+                      <div className="text-center">
+                        ₱ {payment.total_amount.toFixed(2)}
+                      </div>
+                    </div>
+                  </React.Fragment>
+                ))
+              ) : (
+                <div className="col-span-3 text-center py-3">
+                  No recent payments found.
                 </div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">₱ 9,393.25</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="pl-5">RC Junkshop</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">July 29, 2024 @ 12:30 PM</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">₱ 9,393.25</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="pl-5">RC Junkshop</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">July 29, 2024 @ 12:30 PM</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">₱ 9,393.25</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="pl-5">RC Junkshop</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">July 29, 2024 @ 12:30 PM</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">₱ 9,393.25</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="pl-5">RC Junkshop</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">July 29, 2024 @ 12:30 PM</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">₱ 9,393.25</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="pl-5">RC Junkshop</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">July 29, 2024 @ 12:30 PM</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">₱ 9,393.25</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="pl-5">RC Junkshop</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">July 29, 2024 @ 12:30 PM</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">₱ 9,393.25</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="pl-5">RC Junkshop</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">July 29, 2024 @ 12:30 PM</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">₱ 9,393.25</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="pl-5">RC Junkshop</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">July 29, 2024 @ 12:30 PM</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">₱ 9,393.25</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="pl-5">RC Junkshop</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">July 29, 2024 @ 12:30 PM</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">₱ 9,393.25</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="pl-5">RC Junkshop</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">July 29, 2024 @ 12:30 PM</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">₱ 9,393.25</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="pl-5">RC Junkshop</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">July 29, 2024 @ 12:30 PM</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">₱ 9,393.25</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="pl-5">RC Junkshop</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">July 29, 2024 @ 12:30 PM</div>
-              </div>
-              <div className="w-full col-span-1 py-3">
-                <div className="text-center">₱ 9,393.25</div>
-              </div>
+              )}
             </div>
           </div>
         </div>
