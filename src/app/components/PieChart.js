@@ -1,9 +1,42 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import CanvasJSReact from "@canvasjs/react-charts";
 
 const { CanvasJS, CanvasJSChart } = CanvasJSReact;
 
-const PieChart = () => {
+const PieChart = ({
+  totalPayments,
+  totalCommission,
+  totalBookingFee,
+  totalPenalties,
+}) => {
+  const [isBrowser, setIsBrowser] = useState(false);
+
+  useEffect(() => {
+    setIsBrowser(true);
+  }, []);
+
+  if (!isBrowser) {
+    return null; // or some fallback UI
+  }
+
+  // Calculate percentages or default to 0 if totalPayments is 0 or any value is undefined
+  const calculatePercentage = (value) => {
+    if (
+      !totalPayments ||
+      totalPayments === 0 ||
+      value === undefined ||
+      value === null
+    ) {
+      return 0;
+    }
+    return ((value / totalPayments) * 100).toFixed(2);
+  };
+
+  const bookingFeePercentage = calculatePercentage(totalBookingFee);
+  const penaltiesPercentage = calculatePercentage(totalPenalties);
+  const commissionPercentage = calculatePercentage(totalCommission);
+
+  // Set chart options
   const options = {
     exportEnabled: false,
     animationEnabled: true,
@@ -19,9 +52,21 @@ const PieChart = () => {
         indexLabel: "{label} {y}%",
         indexLabelMaxWidth: 100,
         dataPoints: [
-          { y: 40.07, label: "Booking Fee", color: "#2D9CDB" },
-          { y: 2.96, label: "Penalties", color: "#EB5757" },
-          { y: 56.96, label: "Commission", color: "#27AE60" },
+          {
+            y: parseFloat(bookingFeePercentage),
+            label: "Booking Fee",
+            color: "#2D9CDB",
+          },
+          {
+            y: parseFloat(penaltiesPercentage),
+            label: "Penalties",
+            color: "#EB5757",
+          },
+          {
+            y: parseFloat(commissionPercentage),
+            label: "Commission",
+            color: "#27AE60",
+          },
         ],
       },
     ],
