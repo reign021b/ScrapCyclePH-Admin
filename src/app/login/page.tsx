@@ -1,22 +1,25 @@
-'use client';
+// src/app/login/page.tsx
 
-import React, { useState, FormEvent } from 'react';
+"use client";
+
+import React, { useState, FormEvent } from "react";
 import Image from "next/image";
-import { login } from './actions';
+import { login } from "./actions";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const Login: React.FC = () => {
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
 
   const validateInput = (): boolean => {
     if (!email || !password) {
-      setError('Please fill in all fields');
+      toast.error("Please fill in all fields");
       return false;
     }
-    if (!email.includes('@')) {
-      setError('Please enter a valid email');
+    if (!email.includes("@")) {
+      toast.error("Please enter a valid email");
       return false;
     }
     return true;
@@ -24,22 +27,22 @@ const Login: React.FC = () => {
 
   const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError('');
     if (!validateInput()) return;
 
     setLoading(true);
     const formData = new FormData();
-    formData.append('email', email);
-    formData.append('password', password);
+    formData.append("email", email);
+    formData.append("password", password);
 
-    try {
-      await login(formData);
-      // If login is successful, the user will be redirected by the login action
-    } catch (error) {
-      setError('Invalid credentials');
-    } finally {
-      setLoading(false);
+    const error = await login(formData);
+    if (error) {
+      toast.error(error); // Display error message as toast notification
+    } else {
+      // Redirect to home or perform a successful login action
+      window.location.href = "/";
     }
+
+    setLoading(false);
   };
 
   return (
@@ -49,7 +52,10 @@ const Login: React.FC = () => {
         <p className="text-green-600 font-semibold text-xl my-3">
           ScrapCycle PH Admin
         </p>
-        <form className="flex flex-col w-full items-stretch mt-4 text-gray-800" onSubmit={handleLogin}>
+        <form
+          className="flex flex-col w-full items-stretch mt-4 text-gray-800"
+          onSubmit={handleLogin}
+        >
           <label htmlFor="email" className="text-gray-600 font-medium mb-2">
             Email:
           </label>
@@ -81,10 +87,10 @@ const Login: React.FC = () => {
             className="bg-green-600 text-white rounded-lg p-2 my-3 hover:bg-green-700 transition-all duration-200"
             disabled={loading}
           >
-            {loading ? 'Logging in...' : 'Submit'}
+            {loading ? "Logging in..." : "Submit"}
           </button>
-          {error && <p className="text-red-500">{error}</p>}
         </form>
+        <ToastContainer />
       </div>
     </div>
   );
