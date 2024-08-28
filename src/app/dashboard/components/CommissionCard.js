@@ -3,6 +3,9 @@ import React, { useState } from "react";
 const CommissionCard = ({ totalCommission }) => {
   const [activeIndex, setActiveIndex] = useState(5);
 
+  // Find the highest value in totalCommission
+  const highestTotalCommission = Math.max(...totalCommission.map(Number));
+
   // Calculate the percentage change
   const calculatePercentageChange = () => {
     const previousMonth = totalCommission[4] || 0;
@@ -56,24 +59,26 @@ const CommissionCard = ({ totalCommission }) => {
                   );
                 })()}
               </p>
-              <div className="flex items-end pt-5">
-                {totalCommission.map((fee, index) => (
-                  <div
-                    key={index}
-                    id={index.toString()}
-                    className={`ml-2 pt-[20px] rounded-lg w-[24px] ${
-                      index === activeIndex ? "bg-[#27AE60]" : "bg-gray-300"
-                    } hover:bg-[#27AE60]`}
-                    style={{
-                      height: `${16 + index * 10}px`,
-                      transition: "height 500ms ease",
-                    }}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    onMouseLeave={() => setActiveIndex(5)}
-                  >
-                    &nbsp;
-                  </div>
-                ))}
+              <div className="flex items-end pt-5 h-[86px]">
+                {totalCommission.map((fee, index) => {
+                  // Calculate dynamic height
+                  const barHeight =
+                    fee === 0 ? 10 : (fee / highestTotalCommission) * 66;
+
+                  return (
+                    <div
+                      key={index}
+                      id={index.toString()}
+                      className={`ml-2 pt-[20px] rounded-lg w-[24px] ${
+                        index === activeIndex ? "bg-[#27AE60]" : "bg-gray-300"
+                      } hover:bg-[#27AE60] h-[${barHeight}px]`}
+                      onMouseEnter={() => setActiveIndex(index)}
+                      onMouseLeave={() => setActiveIndex(5)}
+                    >
+                      &nbsp;
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

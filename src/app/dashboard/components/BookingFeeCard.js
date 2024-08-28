@@ -9,6 +9,9 @@ const BookingFeeCard = ({ totalBookingFee }) => {
     return null;
   }
 
+  // Find the highest value in totalBookingFee
+  const highestTotalBookingFee = Math.max(...totalBookingFee.map(Number));
+
   // Calculate the percentage change
   const calculatePercentageChange = () => {
     const previousMonth = totalBookingFee[4] || 0;
@@ -57,24 +60,26 @@ const BookingFeeCard = ({ totalBookingFee }) => {
                   );
                 })()}
               </p>
-              <div className="flex items-end pt-5">
-                {totalBookingFee.map((fee, index) => (
-                  <div
-                    key={index}
-                    id={index.toString()}
-                    className={`ml-2 pt-[20px] rounded-lg w-[24px] ${
-                      index === activeIndex ? "bg-[#2D9CDB]" : "bg-gray-300"
-                    } hover:bg-[#2D9CDB]`}
-                    style={{
-                      height: `${16 + index * 10}px`,
-                      transition: "height 500ms ease",
-                    }}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    onMouseLeave={() => setActiveIndex(5)}
-                  >
-                    &nbsp;
-                  </div>
-                ))}
+              <div className="flex items-end pt-5 h-[86px]">
+                {totalBookingFee.map((fee, index) => {
+                  // Calculate dynamic height
+                  const barHeight =
+                    fee === 0 ? 10 : (fee / highestTotalBookingFee) * 66;
+
+                  return (
+                    <div
+                      key={index}
+                      id={index.toString()}
+                      className={`ml-2 pt-[20px] rounded-lg w-[24px] ${
+                        index === activeIndex ? "bg-[#2D9CDB]" : "bg-gray-300"
+                      } hover:bg-[#2D9CDB] h-[${barHeight}px]`}
+                      onMouseEnter={() => setActiveIndex(index)}
+                      onMouseLeave={() => setActiveIndex(5)}
+                    >
+                      &nbsp;
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>

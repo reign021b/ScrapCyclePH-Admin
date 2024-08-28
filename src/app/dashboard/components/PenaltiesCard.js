@@ -3,6 +3,15 @@ import React, { useState } from "react";
 const PenaltiesCard = ({ totalPenalties }) => {
   const [activeIndex, setActiveIndex] = useState(5);
 
+  // Ensure totalPenalties is an array
+  if (!Array.isArray(totalPenalties)) {
+    console.error("Invalid totalPenalties: expected an array");
+    return null;
+  }
+
+  // Find the highest value in totalPenalties
+  const highestTotalPenalties = Math.max(...totalPenalties.map(Number));
+
   // Calculate the percentage change
   const calculatePercentageChange = () => {
     const previousMonth = totalPenalties[4] || 0;
@@ -53,30 +62,30 @@ const PenaltiesCard = ({ totalPenalties }) => {
                 );
               })()}
             </p>
-            <div className="flex items-end justify-between">
-              {totalPenalties.map((penalty, index) => (
-                <div
-                  key={index}
-                  id={index.toString()}
-                  className={`ml-2 pt-[20px]`}
-                >
+            <div className="flex items-end justify-between h-[86px]">
+              {totalPenalties.map((penalty, index) => {
+                // Calculate dynamic height
+                const barHeight =
+                  penalty === 0 ? 10 : (penalty / highestTotalPenalties) * 66;
+
+                return (
                   <div
-                    className={`rounded-lg h-[${
-                      [52, 32, 40, 40, 52, 66][index]
-                    }px] ${
-                      index === activeIndex ? "bg-[#EB5757]" : "bg-gray-300"
-                    } hover:bg-[#EB5757] w-[24px]`}
-                    style={{
-                      height: `${16 + index * 10}px`,
-                      transition: "height 500ms ease",
-                    }}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    onMouseLeave={() => setActiveIndex(5)}
+                    key={index}
+                    id={index.toString()}
+                    className="ml-2 pt-[20px]"
                   >
-                    &nbsp;
+                    <div
+                      className={`rounded-lg ${
+                        index === activeIndex ? "bg-[#EB5757]" : "bg-gray-300"
+                      } hover:bg-[#EB5757] w-[24px] h-[${barHeight}px] pt-5`}
+                      onMouseEnter={() => setActiveIndex(index)}
+                      onMouseLeave={() => setActiveIndex(5)}
+                    >
+                      &nbsp;
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
