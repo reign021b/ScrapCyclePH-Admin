@@ -1,131 +1,175 @@
 "use client";
 
-import Image from "next/image";
-
-// icons
-import { HiOutlineLogout } from "react-icons/hi";
-import { BsCalendar2WeekFill } from "react-icons/bs";
-import {
-  FaCheckCircle,
-  FaPlusCircle,
-  FaRegCircle,
-  FaChevronDown,
-  FaChevronUp,
-} from "react-icons/fa";
-import ActiveCollector from "./components/active-collector";
-import UnpaidCollector from "./components/unpaid-collector";
-import Map from "./components/map";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/utils/supabase/client";
+import StatsBar from "./components/StatsBar";
+import Sidebar from "./components/Sidebar";
+import Map from "./components/Map";
+import AppBar from "./components/AppBar";
 
 export default function Home() {
-  return (
-    <main className="flex h-screen overflow-y-clip flex-col items-center text-slate-600 overflow-x-hidden">
-      {/* app bar */}
-      <div className="flex items-center w-screen px-4 bg-white">
-        <div className="mr-auto">
-          <Image src={`/scrapcycle-logo.png`} width={230} height={50}></Image>
-        </div>
-        <p className="font-semibold">Genevieve Navales (Admin 1)</p>
-        <Image
-          src={
-            "https://i.pinimg.com/564x/5b/01/dd/5b01dd38126870d000aee1ed5c8daa80.jpg"
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [operatorName, setOperatorName] = useState(null);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [profilePath, setProfilePath] = useState(null);
+  const [allBookings, setAllBookings] = useState([]);
+  const [filteredBookings, setFilteredBookings] = useState([]);
+  const [activeCity, setActiveCity] = useState("Butuan City");
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
+  const today = new Date().toISOString().split("T")[0]; // Format YYYY-MM-DD
+  const [selectedDate, setSelectedDate] = useState(today);
+
+  const handleClose = () => {
+    setSelectedBookingId(null);
+  };
+
+  const handleDateChange = (date) => {
+    setSelectedDate(date);
+  };
+
+  useEffect(() => {
+    const fetchOperator = async (session) => {
+      try {
+        const { data: operators, error: operatorError } = await supabase
+          .from("operators")
+          .select("name, is_super_admin, profile_path")
+          .eq("id", session.user.id)
+          .single();
+
+        if (operatorError) {
+          console.error("Error fetching operator:", operatorError);
+        } else if (operators) {
+          setOperatorName(operators.name);
+          setIsSuperAdmin(operators.is_super_admin);
+          const cleanedProfilePath = operators.profile_path?.replace(
+            /^'|'$/g,
+            ""
+          );
+          setProfilePath(cleanedProfilePath);
+        }
+
+        await fetchBookings();
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const fetchBookings = async () => {
+      try {
+        const { data: bookingsData, error: bookingsError } = await supabase.rpc(
+          "get_bookings_for_today"
+        );
+
+        if (bookingsError) {
+          throw bookingsError;
+        }
+
+        setAllBookings(bookingsData);
+      } catch (error) {
+        console.error("Error fetching bookings:", error.message);
+      }
+    };
+
+    const checkUser = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session) {
+        router.push("/login");
+      } else {
+        fetchOperator(session);
+        const intervalId = setInterval(fetchBookings, 8000);
+
+        return () => clearInterval(intervalId);
+      }
+    };
+
+    checkUser();
+
+    const channel = supabase
+      .channel("operators")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "operators" },
+        (payload) => {
+          if (payload.new && payload.new.id === session?.user.id) {
+            setOperatorName(payload.new.name);
+            setIsSuperAdmin(payload.new.is_super_admin);
+            const cleanedProfilePath = payload.new.profile_path?.replace(
+              /^'|'$/g,
+              ""
+            );
+            setProfilePath(cleanedProfilePath);
           }
-          height={44}
-          width={44}
-          className="rounded-full ml-4 mr-3"
-        />
-        <button className="w-11 h-11 rounded-full text-2xl flex items-center justify-center transition-all duration-300 bg-gray-100 hover:bg-green-50 border border-gray-300 hover:border-green-500 hover:text-green-600">
-          <HiOutlineLogout />
-        </button>
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [router]);
+
+  useEffect(() => {
+    const filtered = allBookings.filter((booking) =>
+      booking.schedule.startsWith(selectedDate)
+    );
+    setFilteredBookings(filtered);
+  }, [allBookings, selectedDate]);
+
+  if (loading) {
+    return (
+      <div className="flex gap-2 w-screen h-screen m-auto justify-center items-center bg-white">
+        <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+        <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+        <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
       </div>
+    );
+  }
 
-      {/* stats bar */}
-      <div className="bg-white border-t px-4 flex w-full text-sm">
-        {/* date picker */}
-        <div className="pr-4 flex items-center min-w-96 border-r py-3">
-          <div className="px-3 py-1 flex items-center mr-2 rounded-full border font-bold text-green-600 border-green-500 bg-green-50">
-            <div className="relative w-3 h-3 mr-2">
-              <div className="absolute w-3 h-3 animate-ping rounded-full bg-green-500" />
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 animate-pulse rounded-full bg-green-500" />
-            </div>
-            <p>TODAY</p>
+  return (
+    <main className="flex h-screen overflow-y-clip flex-col justify-between items-center text-slate-600 overflow-x-hidden">
+      {loading ? (
+        <div className="flex gap-2 w-screen h-screen m-auto justify-center items-center">
+          <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+          <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+          <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+        </div>
+      ) : (
+        <>
+          <></>
+          <AppBar
+            operatorName={operatorName}
+            isSuperAdmin={isSuperAdmin}
+            profilePath={profilePath}
+          />
+          <StatsBar
+            activeCity={activeCity}
+            onDateChange={handleDateChange}
+            selectedDate={selectedDate}
+          />
+          <div className="flex flex-grow w-full bg-white border-t">
+            <Sidebar
+              activeCity={activeCity}
+              setActiveCity={setActiveCity}
+              selectedBookingId={selectedBookingId}
+              setSelectedBookingId={setSelectedBookingId}
+              selectedDate={selectedDate}
+              onClose={handleClose}
+            />
+            <Map
+              bookings={filteredBookings}
+              setSelectedBookingId={setSelectedBookingId}
+              activeCity={activeCity}
+            />
           </div>
-          <p className="mr-auto">February 6, Wed</p>
-          <button className="p-2 rounded-full transition-all duration-300 bg-gray-100 hover:bg-green-50 border border-gray-300 hover:border-green-500 hover:text-green-600">
-            <BsCalendar2WeekFill />
-          </button>
-        </div>
-
-        {/* progress bar */}
-        <div className="flex-grow py-3 px-4 flex items-center justify-between border-r">
-          <p>18/25</p>
-          <div className="rounded-full h-3 mx-4 w-full bg-gray-200">
-            <div className="h-full w-3/4 bg-green-600 rounded-full" />
-          </div>
-          <p>70%</p>
-        </div>
-
-        {/* other details */}
-        <div className="flex items-center justify-center w-24 border-r">
-          <div className="mr-4 text-lg text-green-600">
-            <FaCheckCircle />
-          </div>
-          <p>13</p>
-        </div>
-        <div className="flex items-center justify-center w-24 border-r">
-          <div className="mr-4 text-lg text-gray-400 rotate-45">
-            <FaRegCircle />
-          </div>
-          <p>7</p>
-        </div>
-        <div className="flex items-center justify-center w-24 border-r">
-          <div className="mr-4 text-lg text-red-600 rotate-45">
-            <FaPlusCircle />
-          </div>
-          <p>5</p>
-        </div>
-        <div className="flex items-center justify-center border-r px-4">
-          <div className="mr-4 font-semibold">Trades</div>
-          <p>PHP 11,056</p>
-        </div>
-        <div className="flex items-center justify-center pl-4">
-          <div className="mr-4 font-semibold">Comm.</div>
-          <p>PHP 1,056</p>
-        </div>
-      </div>
-
-      {/* body */}
-      <div className="flex flex-grow w-full bg-white border-t">
-        {/* side bar */}
-        <div className="min-w-[400px] max-w-[400px] border-r flex flex-col justify-between h-full">
-          {/* collectors */}
-          <div className="h-screen-sidebar overflow-scroll ml-4 pr-1 py-6 overflow-x-clip">
-            {/* active */}
-            <ActiveCollector />
-            <ActiveCollector />
-            <ActiveCollector />
-
-            {/* unpaid */}
-            <button className="flex w-full justify-between items-center mr-4 mt-6 mb-2 p-2 rounded-lg hover:bg-gray-100">
-              <p className="font-semibold">Unpaid (1)</p>
-              <FaChevronUp />
-            </button>
-
-            <UnpaidCollector />
-          </div>
-
-          {/* cities */}
-          <div className="w-full border-y font-medium bg-white">
-            <button className="px-7 py-3 border-r bg-green-600 text-white">
-              Butuan
-            </button>
-            <button className="px-7 py-3 border-r ">Cabadbaran</button>
-            <button className="px-7 py-3 border-r ">Tagum</button>
-          </div>
-        </div>
-
-        {/* map */}
-        <Map />
-      </div>
+        </>
+      )}
     </main>
   );
 }
