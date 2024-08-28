@@ -6,14 +6,12 @@ import { supabase } from "@/utils/supabase/client";
 import AppBar from "@/src/app/components/AppBar";
 import { FaCalendarAlt, FaMapMarkerAlt } from "react-icons/fa";
 import PieChart from "@/src/app/components/PieChart";
+import DatePicker from "react-datepicker";
+import { format, parseISO } from "date-fns"; // Import the format function
 import "react-datepicker/dist/react-datepicker.css";
-import { format, parseISO } from "date-fns";
 import CommissionCard from "./components/CommissionCard";
 import BookingFeeCard from "./components/BookingFeeCard";
 import PenaltiesCard from "./components/PenaltiesCard";
-import dynamic from "next/dynamic";
-
-const DatePicker = dynamic(() => import("react-datepicker"), { ssr: false });
 
 export default function Dashboard() {
   const router = useRouter();
@@ -31,11 +29,6 @@ export default function Dashboard() {
   const [totalReceivables, setTotalReceivables] = useState(0);
   const [recentPayments, setRecentPayments] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Set isClient to true when component mounts
-    setIsClient(true);
-  }, []);
 
   useEffect(() => {
     const fetchCities = async () => {
