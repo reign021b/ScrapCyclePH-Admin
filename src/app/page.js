@@ -16,7 +16,7 @@ export default function Home() {
   const [profilePath, setProfilePath] = useState(null);
   const [allBookings, setAllBookings] = useState([]);
   const [filteredBookings, setFilteredBookings] = useState([]);
-  const [activeCity, setActiveCity] = useState("Butuan City");
+  const [activeCity, setActiveCity] = useState("Davao City");
   const [selectedBookingId, setSelectedBookingId] = useState(null);
   const today = new Date().toISOString().split("T")[0]; // Format YYYY-MM-DD
   const [selectedDate, setSelectedDate] = useState(today);

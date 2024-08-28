@@ -20,7 +20,7 @@ export default function Dashboard() {
   const [profilePath, setProfilePath] = useState(null);
   const [cities, setCities] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState("Butuan City");
+  const [selectedCity, setSelectedCity] = useState("Davao City");
   const [startDate, setStartDate] = useState(new Date());
   const [totalPayments, setTotalPayments] = useState(0);
   const [totalCommission, setTotalCommission] = useState(Array(6).fill(0));
@@ -105,7 +105,9 @@ export default function Dashboard() {
         if (error) throw error;
 
         // Filter the data based on the months array
-        const filteredData = data.filter((item) => months.includes(item.month));
+        const filteredData = data.filter(
+          (item) => months.includes(item.month) && item.city === selectedCity
+        );
 
         // Calculate the total commission for each month
         const totalCommissions = months.map((month) => {
@@ -142,7 +144,9 @@ export default function Dashboard() {
         if (error) throw error;
 
         // Filter the data based on the months array
-        const filteredData = data.filter((item) => months.includes(item.month));
+        const filteredData = data.filter(
+          (item) => months.includes(item.month) && item.city === selectedCity
+        );
 
         // Calculate the total booking fee for each month
         const totalBookingFees = months.map((month) => {
@@ -226,7 +230,6 @@ export default function Dashboard() {
 
     const fetchTotalRecentPayments = async () => {
       try {
-        setLoading(true); // Set loading to true before fetching
         const formattedMonth = format(startDate, "yyyy-MM");
         const { data, error } = await supabase.rpc(
           "get_total_recent_payments_for_dashboard"
@@ -253,7 +256,7 @@ export default function Dashboard() {
       } catch (error) {
         console.error("Error fetching recent payments:", error);
       } finally {
-        setLoading(false); // Set loading to false after fetching
+        setLoading(false);
       }
     };
 
@@ -278,6 +281,17 @@ export default function Dashboard() {
     };
 
     checkUser();
+
+    const interval = setInterval(() => {
+      fetchTotalPayments();
+      fetchTotalCommission();
+      fetchTotalBookingFee();
+      fetchTotalPenalties();
+      fetchTotalReceivables();
+      fetchTotalRecentPayments();
+    }, 8000);
+
+    return () => clearInterval(interval);
   }, [router, selectedCity, startDate]);
 
   const paidPercentage =
@@ -286,10 +300,10 @@ export default function Dashboard() {
   return (
     <main className="text-gray-700 bg-white h-screen">
       {loading ? (
-        <div class="flex gap-2 w-screen h-screen m-auto justify-center items-center">
-          <div class="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
-          <div class="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
-          <div class="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+        <div className="flex gap-2 w-screen h-screen m-auto justify-center items-center">
+          <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+          <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+          <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
         </div>
       ) : (
         <>

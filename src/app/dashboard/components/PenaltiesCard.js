@@ -62,18 +62,14 @@ const PenaltiesCard = ({ totalPenalties }) => {
                 );
               })()}
             </p>
-            <div className="flex items-end justify-between h-[86px]">
+            <div className="flex items-end justify-between h-[86px]  pt-[20px]">
               {totalPenalties.map((penalty, index) => {
                 // Calculate dynamic height
                 const barHeight =
                   penalty === 0 ? 10 : (penalty / highestTotalPenalties) * 66;
 
                 return (
-                  <div
-                    key={index}
-                    id={index.toString()}
-                    className="ml-2 pt-[20px]"
-                  >
+                  <div key={index} id={index.toString()} className="ml-2">
                     <div
                       className={`rounded-lg ${
                         index === activeIndex ? "bg-[#EB5757]" : "bg-gray-300"
