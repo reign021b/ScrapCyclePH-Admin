@@ -40,6 +40,12 @@ const PenaltiesCard = ({ totalPenalties }) => {
         : "-100%"
       : `${Math.abs(percentage)}%`;
 
+  // Ensure totalPenalties[activeIndex] is a number
+  const currentPenalty =
+    typeof totalPenalties[activeIndex] === "number"
+      ? totalPenalties[activeIndex]
+      : 0;
+
   return (
     <div className="w-full mr-5">
       <div className="w-full border rounded-t-xl pt-3">
@@ -51,7 +57,7 @@ const PenaltiesCard = ({ totalPenalties }) => {
           <div className="flex items-end justify-between">
             <p className="text-3xl font-semibold">
               {(() => {
-                const [integerPart, decimalPart] = totalPenalties[activeIndex]
+                const [integerPart, decimalPart] = currentPenalty
                   .toFixed(2)
                   .split(".");
                 return (
@@ -62,7 +68,7 @@ const PenaltiesCard = ({ totalPenalties }) => {
                 );
               })()}
             </p>
-            <div className="flex items-end justify-between h-[86px]  pt-[20px]">
+            <div className="flex items-end justify-between h-[86px] pt-[20px]">
               {totalPenalties.map((penalty, index) => {
                 // Calculate dynamic height
                 const barHeight =
@@ -73,9 +79,10 @@ const PenaltiesCard = ({ totalPenalties }) => {
                     <div
                       className={`rounded-lg ${
                         index === activeIndex ? "bg-[#EB5757]" : "bg-gray-300"
-                      } hover:bg-[#EB5757] w-[24px] h-[${barHeight}px] pt-5`}
+                      } hover:bg-[#EB5757] w-[24px] pt-5`}
+                      style={{ height: `${barHeight}px` }} // Use inline styles for dynamic height
                       onMouseEnter={() => setActiveIndex(index)}
-                      onMouseLeave={() => setActiveIndex(5)}
+                      onMouseLeave={() => setActiveIndex(null)} // Ensure to pass null to reset
                     >
                       &nbsp;
                     </div>
