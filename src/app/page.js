@@ -18,7 +18,8 @@ export default function Home() {
   const [filteredBookings, setFilteredBookings] = useState([]);
   const [activeCity, setActiveCity] = useState("Butuan City");
   const [selectedBookingId, setSelectedBookingId] = useState(null);
-  const [selectedDate, setSelectedDate] = useState("");
+  const today = new Date().toISOString().split("T")[0]; // Format YYYY-MM-DD
+  const [selectedDate, setSelectedDate] = useState(today);
 
   const handleClose = () => {
     setSelectedBookingId(null);
@@ -122,38 +123,53 @@ export default function Home() {
   }, [allBookings, selectedDate]);
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex gap-2 w-screen h-screen m-auto justify-center items-center bg-white">
+        <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+        <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+        <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+      </div>
+    );
   }
 
   return (
     <main className="flex h-screen overflow-y-clip flex-col justify-between items-center text-slate-600 overflow-x-hidden">
-      <AppBar
-        operatorName={operatorName}
-        isSuperAdmin={isSuperAdmin}
-        profilePath={profilePath}
-      />
-
-      <StatsBar
-        activeCity={activeCity}
-        onDateChange={handleDateChange}
-        selectedDate={selectedDate}
-      />
-
-      <div className="flex flex-grow w-full bg-white border-t">
-        <Sidebar
-          activeCity={activeCity}
-          setActiveCity={setActiveCity}
-          selectedBookingId={selectedBookingId}
-          setSelectedBookingId={setSelectedBookingId}
-          selectedDate={selectedDate}
-          onClose={handleClose}
-        />
-        <Map
-          bookings={filteredBookings}
-          setSelectedBookingId={setSelectedBookingId}
-          activeCity={activeCity}
-        />
-      </div>
+      {loading ? (
+        <div className="flex gap-2 w-screen h-screen m-auto justify-center items-center">
+          <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+          <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+          <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+        </div>
+      ) : (
+        <>
+          <></>
+          <AppBar
+            operatorName={operatorName}
+            isSuperAdmin={isSuperAdmin}
+            profilePath={profilePath}
+          />
+          <StatsBar
+            activeCity={activeCity}
+            onDateChange={handleDateChange}
+            selectedDate={selectedDate}
+          />
+          <div className="flex flex-grow w-full bg-white border-t">
+            <Sidebar
+              activeCity={activeCity}
+              setActiveCity={setActiveCity}
+              selectedBookingId={selectedBookingId}
+              setSelectedBookingId={setSelectedBookingId}
+              selectedDate={selectedDate}
+              onClose={handleClose}
+            />
+            <Map
+              bookings={filteredBookings}
+              setSelectedBookingId={setSelectedBookingId}
+              activeCity={activeCity}
+            />
+          </div>
+        </>
+      )}
     </main>
   );
 }

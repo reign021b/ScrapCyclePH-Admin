@@ -25,6 +25,7 @@ const Sidebar = ({
 
         {/* Pass selectedBookingId to BookingSidebar */}
         <BookingSidebar
+          activeCity={activeCity}
           selectedBookingId={selectedBookingId}
           onClose={onClose}
         />

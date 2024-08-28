@@ -50,7 +50,7 @@ const DateComponent = ({ onDateChange }) => {
       <div
         className={`px-3 py-1 flex items-center mr-2 rounded-full border font-bold ${classNames}`}
       >
-        <p>{text}</p>
+        <p className="px-3">{text}</p>
       </div>
       <DatePicker
         selected={selectedDate}

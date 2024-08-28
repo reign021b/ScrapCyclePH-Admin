@@ -9,6 +9,9 @@ import PieChart from "../components/PieChart";
 import DatePicker from "react-datepicker";
 import { format, parseISO } from "date-fns"; // Import the format function
 import "react-datepicker/dist/react-datepicker.css";
+import CommissionCard from "./components/CommissionCard";
+import BookingFeeCard from "./components/BookingFeeCard";
+import PenaltiesCard from "./components/PenaltiesCard";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -20,9 +23,9 @@ export default function Dashboard() {
   const [selectedCity, setSelectedCity] = useState("Butuan City");
   const [startDate, setStartDate] = useState(new Date());
   const [totalPayments, setTotalPayments] = useState(0);
-  const [totalCommission, setTotalCommission] = useState(0);
-  const [totalBookingFee, setTotalBookingFee] = useState(0);
-  const [totalPenalties, setTotalPenalties] = useState(0);
+  const [totalCommission, setTotalCommission] = useState(Array(6).fill(0));
+  const [totalBookingFee, setTotalBookingFee] = useState(Array(6).fill(0));
+  const [totalPenalties, setTotalPenalties] = useState(Array(6).fill(0));
   const [totalReceivables, setTotalReceivables] = useState(0);
   const [recentPayments, setRecentPayments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -86,71 +89,113 @@ export default function Dashboard() {
     const fetchTotalCommission = async () => {
       try {
         const formattedMonth = format(startDate, "yyyy-MM");
+        const months = [];
+        const currentMonth = new Date(startDate);
+
+        // Generate an array of months from 5 months ago to the current month
+        for (let i = 5; i >= 0; i--) {
+          const month = new Date(currentMonth);
+          month.setMonth(month.getMonth() - i);
+          months.push(format(month, "yyyy-MM"));
+        }
+
         const { data, error } = await supabase.rpc(
           "get_total_commission_for_dashboard"
         );
         if (error) throw error;
 
-        // Filter the data based on selected city and month
-        const filteredData = data.filter(
-          (item) => item.city === selectedCity && item.month === formattedMonth
-        );
+        // Filter the data based on the months array
+        const filteredData = data.filter((item) => months.includes(item.month));
 
-        // Calculate the total commission for the selected city and month
-        const total = filteredData.reduce(
-          (acc, item) => acc + parseFloat(item.total_commission || 0),
-          0
-        );
-        setTotalCommission(total);
+        // Calculate the total commission for each month
+        const totalCommissions = months.map((month) => {
+          const monthData = filteredData.filter((item) => item.month === month);
+          return monthData.reduce(
+            (acc, item) => acc + parseFloat(item.total_commission || 0),
+            0
+          );
+        });
+
+        setTotalCommission(totalCommissions);
       } catch (error) {
         console.error("Error fetching total commission:", error);
-        setTotalCommission(0); // Default to 0 in case of error
+        setTotalCommission(Array(6).fill(0)); // Default to array of 0 in case of error
       }
     };
 
     const fetchTotalBookingFee = async () => {
       try {
         const formattedMonth = format(startDate, "yyyy-MM");
+        const months = [];
+        const currentMonth = new Date(startDate);
+
+        // Generate an array of months from 5 months ago to the current month
+        for (let i = 5; i >= 0; i--) {
+          const month = new Date(currentMonth);
+          month.setMonth(month.getMonth() - i);
+          months.push(format(month, "yyyy-MM"));
+        }
+
         const { data, error } = await supabase.rpc(
           "get_total_booking_fee_for_dashboard"
         );
         if (error) throw error;
 
-        const filteredData = data.filter(
-          (item) => item.city === selectedCity && item.month === formattedMonth
-        );
+        // Filter the data based on the months array
+        const filteredData = data.filter((item) => months.includes(item.month));
 
-        const total = filteredData.reduce(
-          (acc, item) => acc + parseFloat(item.total_booking_fee || 0),
-          0
-        );
-        setTotalBookingFee(total);
+        // Calculate the total booking fee for each month
+        const totalBookingFees = months.map((month) => {
+          const monthData = filteredData.filter((item) => item.month === month);
+          return monthData.reduce(
+            (acc, item) => acc + parseFloat(item.total_booking_fee || 0),
+            0
+          );
+        });
+
+        setTotalBookingFee(totalBookingFees);
       } catch (error) {
-        console.error("Error fetching total booking fee:", error);
-        setTotalBookingFee(0); // Default to 0 in case of error
+        console.error("Error fetching total booking fees:", error);
+        setTotalBookingFee(Array(6).fill(0)); // Default to array of 0 in case of error
       }
     };
 
     const fetchTotalPenalties = async () => {
       try {
         const formattedMonth = format(startDate, "yyyy-MM");
+        const months = [];
+        const currentMonth = new Date(startDate);
+
+        // Generate an array of months from 5 months ago to the current month
+        for (let i = 5; i >= 0; i--) {
+          const month = new Date(currentMonth);
+          month.setMonth(month.getMonth() - i);
+          months.push(format(month, "yyyy-MM"));
+        }
+
         const { data, error } = await supabase.rpc(
           "get_total_penalties_for_dashboard"
         );
         if (error) throw error;
 
+        // Filter the data based on the months array and selected city
         const filteredData = data.filter(
-          (item) => item.city === selectedCity && item.month === formattedMonth
+          (item) => months.includes(item.month) && item.city === selectedCity
         );
 
-        const total = filteredData.reduce(
-          (acc, item) => acc + parseFloat(item.total_penalties || 0),
-          0
-        );
-        setTotalPenalties(total);
+        // Calculate the total penalties for each month
+        const totalPenalties = months.map((month) => {
+          const monthData = filteredData.filter((item) => item.month === month);
+          return monthData.reduce(
+            (acc, item) => acc + parseFloat(item.total_penalties || 0),
+            0
+          );
+        });
+
+        setTotalPenalties(totalPenalties);
       } catch (error) {
         console.error("Error fetching total penalties:", error);
-        setTotalPenalties(0); // Default to 0 in case of error
+        setTotalPenalties(Array(6).fill(0)); // Default to array of 0 in case of error
       }
     };
 
@@ -235,457 +280,270 @@ export default function Dashboard() {
     checkUser();
   }, [router, selectedCity, startDate]);
 
-  const formattedDate = startDate ? format(startDate, "yyyy-MM") : "";
+  const paidPercentage =
+    (totalPayments / (totalReceivables + totalPayments)) * 100 || 0;
 
   return (
     <main className="text-gray-700 bg-white h-screen">
-      <AppBar
-        operatorName={operatorName}
-        isSuperAdmin={isSuperAdmin}
-        profilePath={profilePath}
-      />
-      <div className="flex justify-between items-center border border-t-0">
-        <div className="pl-5 py-3">
-          <p className="font-bold">Dashboard</p>
-          <p className="text-sm">
-            This is your overview of this month&apos;s performance.
-          </p>
+      {loading ? (
+        <div class="flex gap-2 w-screen h-screen m-auto justify-center items-center">
+          <div class="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+          <div class="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+          <div class="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
         </div>
-        <div className="flex relative">
-          <button
-            className="items-center flex border rounded-xl px-3 py-[6px] mr-4"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-          >
-            <FaMapMarkerAlt />
-            <p className="px-4 text-xs font-semibold">{selectedCity}</p>
-          </button>
-          {dropdownOpen && (
-            <div className="absolute top-full left-0 mt-2 text-sm text-center w-[145px] border bg-white shadow-lg z-10 rounded-xl">
-              <ul className="list-none m-0 p-0">
-                {cities.map((city, index) => (
-                  <li
-                    key={index}
-                    className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                    onClick={() => {
-                      setSelectedCity(city.city);
-                      setDropdownOpen(false);
-                    }}
-                  >
-                    {city.city}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <div
-            className="flex items-center border rounded-xl px-3 py-[6px] mr-4"
-            style={{ width: "170px" }}
-          >
-            <FaCalendarAlt />
-            <div className="flex-1">
-              <DatePicker
-                selected={startDate}
-                onChange={(date) => setStartDate(date)}
-                dateFormat="MMMM yyyy"
-                showMonthYearPicker
-                className="px-4 text-xs font-semibold w-full text-center"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="justify-center items-center mx-auto max-w-[1440px]">
-        <div className="px-5 py-4">
-          <p className="text-3xl font-semibold pb-2">
-            {/* Split the totalPayments value into integer and decimal parts */}
-            {(() => {
-              const [integerPart, decimalPart] = totalPayments
-                .toFixed(2)
-                .split(".");
-              return (
-                <>
-                  ₱ {integerPart.toLocaleString()}
-                  <span className="text-lg">.{decimalPart}</span>
-                </>
-              );
-            })()}
-          </p>
-          <p className="text-xs font-semibold">
-            Last transaction:{" "}
-            <span className="text-blue-400 font-semibold">+₱3,560.50</span> from
-            RC Junkshop • 2 mins ago
-          </p>
-        </div>
+      ) : (
+        <>
+          <AppBar
+            operatorName={operatorName}
+            isSuperAdmin={isSuperAdmin}
+            profilePath={profilePath}
+          />
 
-        <div className="flex grid-cols-3 w-full px-5 pb-5">
-          {/* Column 1 */}
-          <div className="mr-5 w-full">
-            {/* Start Row 1 */}
-            <div className="mb-4">
-              <div className="cols-span-1 w-full border rounded-t-xl mr-5">
-                <div className="w-full pt-3">
-                  <div className="px-5 py-3">
-                    <p className="font-bold">Commission</p>
-                    <p className="text-xs">
-                      This is your overview of this month&apos;s performance.
-                    </p>
-                    <div className="flex items-end justify-between">
-                      <p className="text-3xl font-semibold">
-                        {(() => {
-                          const [integerPart, decimalPart] = totalCommission
-                            .toFixed(2)
-                            .split(".");
-                          return (
-                            <>
-                              ₱ {integerPart.toLocaleString()}
-                              <span className="text-lg">.{decimalPart}</span>
-                            </>
-                          );
-                        })()}
-                      </p>
-                      <div className="flex items-end">
-                        <div className="ml-4 pt-[20px]">
-                          <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-green-600  w-[24px]">
-                            &nbsp;
-                          </div>
-                        </div>
-                        <div className="ml-2 pt-[20px]">
-                          <div className="rounded-lg h-[32px] bg-gray-300 hover:bg-green-600 w-[24px]">
-                            &nbsp;
-                          </div>
-                        </div>
-                        <div className="ml-2 pt-[20px]">
-                          <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-green-600 w-[24px]">
-                            &nbsp;
-                          </div>
-                        </div>
-                        <div className="ml-2 pt-[20px]">
-                          <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-green-600 w-[24px]">
-                            &nbsp;
-                          </div>
-                        </div>
-                        <div className="ml-2 pt-[20px]">
-                          <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-green-600 w-[24px]">
-                            &nbsp;
-                          </div>
-                        </div>
-                        <div className="ml-2 pt-[20px]">
-                          <div className="rounded-lg h-[66px] bg-green-600 hover:bg-green-600 w-[24px]">
-                            &nbsp;
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <div className="cols-span-1 w-full border rounded-b-xl mr-5 border-t-0 flex">
-                  <div className="text-[10px] py-4 pl-5 pr-2">
-                    <div className="rounded-full bg-green-100 w-[55px] justify-center items-center flex py-1 text-green-600">
-                      +8.15%
-                    </div>
-                  </div>
-                  <div className="text-[10px] flex justify-center items-center">
-                    Compared to previous month
-                  </div>
-                </div>
-              </div>
+          <div className="flex justify-between items-center border border-t-0">
+            <div className="pl-5 py-3">
+              <p className="font-bold">Dashboard</p>
+              <p className="text-sm">
+                This is your overview of this month&apos;s performance.
+              </p>
             </div>
-            {/* End Row 1 */}
-
-            {/* Start Row 2 */}
-            <div className="mb-4">
-              <div className="cols-span-1 w-full border rounded-t-xl mr-5 pt-3">
-                <div className="w-full">
-                  <div className="px-5 py-3">
-                    <p className="font-bold">Booking Fee</p>
-                    <p className="text-xs">
-                      This is your overview of this month&apos;s performance.
-                    </p>
-                    <div className="flex items-end justify-between">
-                      <p className="text-3xl font-semibold">
-                        {(() => {
-                          const [integerPart, decimalPart] = totalBookingFee
-                            .toFixed(2)
-                            .split(".");
-                          return (
-                            <>
-                              ₱ {integerPart.toLocaleString()}
-                              <span className="text-lg">.{decimalPart}</span>
-                            </>
-                          );
-                        })()}
-                      </p>
-                      <div className="flex items-end">
-                        <div className="ml-4 pt-[20px]">
-                          <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-blue-500  w-[24px]">
-                            &nbsp;
-                          </div>
-                        </div>
-                        <div className="ml-2 pt-[20px]">
-                          <div className="rounded-lg h-[32px] bg-gray-300 hover:bg-blue-500 w-[24px]">
-                            &nbsp;
-                          </div>
-                        </div>
-                        <div className="ml-2 pt-[20px]">
-                          <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-blue-500 w-[24px]">
-                            &nbsp;
-                          </div>
-                        </div>
-                        <div className="ml-2 pt-[20px]">
-                          <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-blue-500 w-[24px]">
-                            &nbsp;
-                          </div>
-                        </div>
-                        <div className="ml-2 pt-[20px]">
-                          <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-blue-500 w-[24px]">
-                            &nbsp;
-                          </div>
-                        </div>
-                        <div className="ml-2 pt-[20px]">
-                          <div className="rounded-lg h-[66px] bg-blue-500 hover:bg-blue-500 w-[24px]">
-                            &nbsp;
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+            <div className="flex relative">
+              <button
+                className="items-center flex border rounded-xl px-3 py-[6px] mr-4"
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+              >
+                <FaMapMarkerAlt />
+                <p className="px-4 text-xs font-semibold">{selectedCity}</p>
+              </button>
+              {dropdownOpen && (
+                <div className="absolute top-full left-0 mt-2 text-sm text-center w-[145px] border bg-white shadow-lg z-10 rounded-xl">
+                  <ul className="list-none m-0 p-0">
+                    {cities.map((city, index) => (
+                      <li
+                        key={index}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-200"
+                        onClick={() => {
+                          setSelectedCity(city.city);
+                          setDropdownOpen(false);
+                        }}
+                      >
+                        {city.city}
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              </div>
-              <div>
-                <div className="cols-span-1 w-full border rounded-b-xl mr-5 border-t-0 flex">
-                  <div className="text-[10px] py-4 pl-5 pr-2">
-                    <div className="rounded-full bg-green-100 w-[55px] justify-center items-center flex py-1 text-green-600">
-                      +8.15%
-                    </div>
-                  </div>
-                  <div className="text-[10px] flex justify-center items-center">
-                    Compared to previous month
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* End Row 2 */}
-
-            {/* Start Row 3 */}
-            <div className="cols-span-1 w-full border rounded-t-xl mr-5">
-              <div className="w-full pt-3">
-                <div className="px-5 py-3">
-                  <p className="font-bold">Penalties</p>
-                  <p className="text-xs">
-                    This is your overview of this month&apos;s performance.
-                  </p>
-                  <div className="flex items-end justify-between">
-                    <p className="text-3xl font-semibold pb-2">
-                      {(() => {
-                        const [integerPart, decimalPart] = totalPenalties
-                          .toFixed(2)
-                          .split(".");
-                        return (
-                          <>
-                            ₱ {integerPart.toLocaleString()}
-                            <span className="text-lg">.{decimalPart}</span>
-                          </>
-                        );
-                      })()}
-                    </p>
-                    <div className="flex items-end justify-between">
-                      <div className="ml-4 pt-[20px]">
-                        <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-red-600  w-[24px]">
-                          &nbsp;
-                        </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[32px] bg-gray-300 hover:bg-red-600 w-[24px]">
-                          &nbsp;
-                        </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-red-600 w-[24px]">
-                          &nbsp;
-                        </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-red-600 w-[24px]">
-                          &nbsp;
-                        </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-red-600 w-[24px]">
-                          &nbsp;
-                        </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[66px] bg-red-600 hover:bg-red-600 w-[24px]">
-                          &nbsp;
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div className="cols-span-1 w-full border rounded-b-xl mr-5 border-t-0 flex">
-                <div className="text-[10px] py-4 pl-5 pr-2">
-                  <div className="rounded-full bg-green-100 w-[55px] justify-center items-center flex py-1 text-green-600">
-                    +8.15%
-                  </div>
-                </div>
-                <div className="text-[10px] flex justify-center items-center">
-                  Compared to previous month
-                </div>
-              </div>
-            </div>
-            {/* End Row 3 */}
-          </div>
-
-          {/* Column 2 */}
-          <div className="w-full mr-5">
-            {/* Start Row 1 */}
-            <div className="cols-span-1 w-full border rounded-t-xl mr-5 pt-3">
-              <div className="px-5 py-3">
-                <p className="font-bold">Payments Breakdown</p>
-                <p className="text-xs pt-1">See latest payment transactions.</p>
-              </div>
-            </div>
-            <div className="cols-span-1 w-full border rounded-b-xl border-t-0 mr-5 pt-3">
-              <div className="px-3 pb-3 w-full flex items-center justify-center">
-                <div>
-                  <PieChart
-                    totalPayments={totalPayments}
-                    totalCommission={totalCommission}
-                    totalBookingFee={totalBookingFee}
-                    totalPenalties={totalPenalties}
+              )}
+              <div
+                className="flex items-center border rounded-xl px-3 py-[6px] mr-4"
+                style={{ width: "170px" }}
+              >
+                <FaCalendarAlt />
+                <div className="flex">
+                  <DatePicker
+                    selected={startDate}
+                    onChange={(date) => setStartDate(date)}
+                    dateFormat="MMMM yyyy"
+                    showMonthYearPicker
+                    className="px-2 text-xs font-semibold w-full text-center"
+                    popperPlacement="bottom-end"
                   />
                 </div>
               </div>
             </div>
-
-            <div className="mb-4"></div>
-            {/* Start Row 2 */}
-            <div className="cols-span-1 w-full border rounded-t-xl mr-5">
-              <div className="w-full pt-3">
-                <div className="px-5 py-3">
-                  <p className="font-bold">Receivables</p>
-                  <p className="text-xs">
-                    This is your overview of this month&apos;s performance.
+          </div>
+          <div className="justify-center items-center mx-auto max-w-[1440px]">
+            <div className="px-5 py-4">
+              <p className="text-3xl font-semibold">
+                {/* Split the totalPayments value into integer and decimal parts */}
+                {(() => {
+                  const [integerPart, decimalPart] = totalPayments
+                    .toFixed(2)
+                    .split(".");
+                  return (
+                    <>
+                      ₱ {integerPart.toLocaleString()}
+                      <span className="text-lg">.{decimalPart}</span>
+                    </>
+                  );
+                })()}
+              </p>
+              <div className="">
+                {loading ? (
+                  <p className="text-xs font-semibold text-center">
+                    Loading...
                   </p>
-                  <div className="flex items-end justify-between">
-                    <p className="text-3xl font-semibold pb-2">
-                      {(() => {
-                        const [integerPart, decimalPart] = totalReceivables
-                          .toFixed(2)
-                          .split(".");
-                        return (
-                          <>
-                            ₱ {integerPart.toLocaleString()}
-                            <span className="text-lg">.{decimalPart}</span>
-                          </>
-                        );
-                      })()}
-                    </p>
-                    <div className="flex items-end">
-                      <div className="ml-4 pt-[20px]">
-                        <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-yellow-400  w-[24px]">
-                          &nbsp;
-                        </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[32px] bg-gray-300 hover:bg-yellow-400 w-[24px]">
-                          &nbsp;
-                        </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-yellow-400 w-[24px]">
-                          &nbsp;
-                        </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[40px] bg-gray-300 hover:bg-yellow-400 w-[24px]">
-                          &nbsp;
-                        </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[52px] bg-gray-300 hover:bg-yellow-400 w-[24px]">
-                          &nbsp;
-                        </div>
-                      </div>
-                      <div className="ml-2 pt-[20px]">
-                        <div className="rounded-lg h-[66px] bg-yellow-400 hover:bg-yellow-400 w-[24px]">
-                          &nbsp;
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                ) : recentPayments.length > 0 ? (
+                  <p className="text-xs font-semibold">
+                    Last transaction:{" "}
+                    <span className="text-[#2F80ED] font-semibold">
+                      +₱{recentPayments[0].total_amount.toFixed(2)}
+                    </span>{" "}
+                    from {recentPayments[0].junkshop} •{" "}
+                    {recentPayments[0].datetime}
+                  </p>
+                ) : (
+                  <p className="text-xs font-semibold">
+                    No recent payments found.
+                  </p>
+                )}
               </div>
             </div>
-            <div>
-              <div className="cols-span-1 w-full border rounded-b-xl mr-5 border-t-0 flex">
-                <div className="text-[10px] py-4 pl-5 pr-2">
-                  <div className="rounded-full bg-green-100 w-[55px] justify-center items-center flex py-1 text-green-600">
-                    +8.15%
-                  </div>
-                </div>
-                <div className="text-[10px] flex justify-center items-center">
-                  Compared to previous month
-                </div>
-              </div>
-            </div>
-          </div>
 
-          {/* Column 3 */}
-          <div className="w-full">
-            <div className="cols-span-1 w-full border rounded-t-xl pt-3">
-              <div className="px-5 py-3">
-                <p className="font-bold">Recent Payments</p>
-                <p className="text-xs pt-1">See latest payment transactions.</p>
+            <div className="flex grid-cols-3 w-full px-5 pb-5">
+              {/* Column 1 */}
+              <div className="mr-5 w-full">
+                {/* Start Row 1 */}
+                <CommissionCard totalCommission={totalCommission} />
+                {/* End Row 1 */}
+
+                {/* Start Row 2 */}
+                <BookingFeeCard totalBookingFee={totalBookingFee} />
+
+                {/* End Row 2 */}
+
+                {/* Start Row 3 */}
+                <PenaltiesCard totalPenalties={totalPenalties} />
+                {/* End Row 3 */}
               </div>
-            </div>
-            <div className="flex grid-cols-3 border border-y-0 text-xs">
-              <div className="w-full col-span-1 py-3 pt-5">
-                <div className="pl-5">Junkshop</div>
-              </div>
-              <div className="w-full col-span-1 py-3 pt-5">
-                <div className="text-center w-full">Date & Time</div>
-              </div>
-              <div className="w-full col-span-1 py-3 pt-5">
-                <div className="text-center">Amount</div>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 border border-t-0 rounded-b-xl text-[11px] justify-center font-bold h-[564px] overflow-y-auto">
-              {loading ? (
-                <div className="col-span-3 text-center py-3">Loading...</div>
-              ) : recentPayments.length > 0 ? (
-                recentPayments.map((payment, index) => (
-                  <React.Fragment key={index}>
-                    <div className="w-full col-span-1 py-3">
-                      <div className="pl-5">{payment.junkshop}</div>
-                    </div>
-                    <div className="w-full col-span-1 py-3">
-                      <div className="text-center w-full">
-                        {payment.datetime}
-                      </div>
-                    </div>
-                    <div className="w-full col-span-1 py-3">
-                      <div className="text-center">
-                        ₱ {payment.total_amount.toFixed(2)}
-                      </div>
-                    </div>
-                  </React.Fragment>
-                ))
-              ) : (
-                <div className="col-span-3 text-center py-3">
-                  No recent payments found.
+
+              {/* Column 2 */}
+              <div className="w-full mr-5">
+                {/* Start Row 1 */}
+                <div className="cols-span-1 w-full border rounded-t-xl mr-5 pt-3">
+                  <div className="px-5 py-3">
+                    <p className="font-bold">Payments Breakdown</p>
+                    <p className="text-xs pt-1">
+                      This is your overview of the payments breakdown for this
+                      month.
+                    </p>
+                  </div>
                 </div>
-              )}
+                <div className="cols-span-1 w-full border rounded-b-xl border-t-0 mr-5 pt-3">
+                  <div className="px-3 pb-3 w-full flex items-center justify-center">
+                    <div>
+                      <PieChart
+                        totalPayments={totalPayments}
+                        totalCommission={totalCommission[5]}
+                        totalBookingFee={totalBookingFee[5]}
+                        totalPenalties={totalPenalties[5]}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mb-4"></div>
+                {/* Start Row 2 */}
+                <div className="cols-span-1 w-full border rounded-t-xl mr-5">
+                  <div className="w-full pt-3">
+                    <div className="px-5 py-3">
+                      <p className="font-bold">Receivables</p>
+                      <p className="text-xs">
+                        This is your overview of the unpaid payments for this
+                        month.
+                      </p>
+                      <div className="flex items-end justify-between h-[85px]">
+                        <p className="text-3xl font-semibold">
+                          {(() => {
+                            const [integerPart, decimalPart] = totalReceivables
+                              .toFixed(2)
+                              .split(".");
+                            return (
+                              <>
+                                ₱ {integerPart.toLocaleString()}
+                                <span className="text-lg">.{decimalPart}</span>
+                              </>
+                            );
+                          })()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="">
+                  <div className="cols-span-1 w-full border justify-center rounded-b-xl border-t-0 flex">
+                    <div className="flex items-end justify-center">
+                      <div className="py-[17px]">
+                        <div className="rounded-lg h-[22px] bg-gray-200 w-[400px] relative">
+                          <div
+                            className={`flex items-center justify-center text-[10px] text-gray-800 font-semibold rounded-lg h-[22px] bg-[#F2C94C] ${
+                              paidPercentage === 0 ? "justify-start" : ""
+                            }`}
+                            style={{ width: `${paidPercentage}%` }}
+                          >
+                            {paidPercentage > 0 && (
+                              <span className="drop-shadow-lg">{`${paidPercentage.toFixed(
+                                2
+                              )}%`}</span>
+                            )}
+                          </div>
+                          {paidPercentage === 0 && (
+                            <div className="flex justify-center">
+                              <span className="drop-shadow-lg absolute text-center ml-2 text-[10px] text-gray-800 font-semibold">
+                                0.00%
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Column 3 */}
+              <div className="w-full">
+                <div className="cols-span-1 w-full border rounded-t-xl pt-3">
+                  <div className="px-5 py-3">
+                    <p className="font-bold">Recent Payments</p>
+                    <p className="text-xs pt-1">
+                      See latest payment transactions.
+                    </p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 border border-y-0 text-xs">
+                  <div className="w-full col-span-1 py-3 pt-5">
+                    <div className="pl-5">Junkshop</div>
+                  </div>
+                  <div className="w-full col-span-2 py-3 pt-5">
+                    <div className="text-center w-full">Date & Time</div>
+                  </div>
+                  <div className="w-full col-span-1 py-3 pt-5">
+                    <div className="text-center">Amount</div>
+                  </div>
+                </div>
+                <div className="grid grid-cols-4 border border-t-0 rounded-b-xl text-[11px] justify-center font-bold h-[564px] overflow-y-auto">
+                  {loading ? (
+                    <div className="col-span-3 text-center py-3">
+                      Loading...
+                    </div>
+                  ) : recentPayments.length > 0 ? (
+                    recentPayments.map((payment, index) => (
+                      <React.Fragment key={index}>
+                        <div className="w-full col-span-1 py-3">
+                          <div className="pl-5">{payment.junkshop}</div>
+                        </div>
+                        <div className="w-full col-span-2 py-3">
+                          <div className="text-center w-full">
+                            {payment.datetime}
+                          </div>
+                        </div>
+                        <div className="w-full col-span-1 py-3">
+                          <div className="text-center">
+                            ₱ {payment.total_amount.toFixed(2)}
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    ))
+                  ) : (
+                    <div className="col-span-4 text-center py-3">
+                      No recent payments found.
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </>
+      )}
     </main>
   );
 }

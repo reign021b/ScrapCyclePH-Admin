@@ -3,7 +3,7 @@ import { FaChevronDown, FaTimes } from "react-icons/fa";
 import { supabase } from "/utils/supabase/client";
 import ProfileImage from "./ProfileImage";
 
-const BookingSidebar = ({ selectedBookingId, onClose }) => {
+const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dropdownOpen, setDropdownOpen] = useState(null);
@@ -32,10 +32,18 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
         console.error("Error fetching dropdown options:", error.message);
         return;
       }
-      setDropdownOptions(data || []);
+
+      // Filter options by activeCity
+      const filteredOptions = data.filter(
+        (option) => option.city === activeCity
+      );
+
+      setDropdownOptions(filteredOptions || []);
 
       // Create a map of dropdown options by their ID
-      const dropdownMap = new Map(data.map((option) => [option.id, option]));
+      const dropdownMap = new Map(
+        filteredOptions.map((option) => [option.id, option])
+      );
       setSelectedLiners((prevLiners) => {
         const updatedLiners = { ...prevLiners };
         bookings.forEach((booking) => {
@@ -155,14 +163,12 @@ const BookingSidebar = ({ selectedBookingId, onClose }) => {
           >
             <span className="mr-2">
               {(() => {
-                // Get the current liner based on selectedBookingId
                 const currentLiner = selectedLiners[selectedBooking.id];
                 const assignedLinerId = assignedLiners.get(selectedBooking.id);
                 const assignedLiner = dropdownOptions.find(
                   (option) => option.id === assignedLinerId
                 );
 
-                // Determine button text based on available information
                 if (currentLiner) {
                   return `${currentLiner.full_name} (${currentLiner.business_name})`;
                 }

@@ -4,13 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
 import AppBar from "/src/app/components/AppBar";
-import Image from "next/image";
 
 export default function Branches() {
   const router = useRouter();
   const [operatorName, setOperatorName] = useState(null);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [profilePath, setProfilePath] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchOperator = async (session) => {
@@ -28,18 +28,25 @@ export default function Branches() {
         setProfilePath(operator.profile_path?.replace(/^'|'$/g, ""));
       } catch (error) {
         console.error("Error fetching operator data:", error);
+      } finally {
+        setLoading(false); // Ensure loading is set to false after completion
       }
     };
 
     const checkUser = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      if (!session) {
-        router.push("/login");
-      } else {
-        fetchOperator(session);
+        if (!session) {
+          router.push("/login");
+        } else {
+          fetchOperator(session);
+        }
+      } catch (error) {
+        console.error("Error checking user session:", error);
+        setLoading(false); // Ensure loading is set to false if session check fails
       }
     };
 
@@ -48,11 +55,21 @@ export default function Branches() {
 
   return (
     <main className="text-gray-700 bg-white">
-      <AppBar
-        operatorName={operatorName}
-        isSuperAdmin={isSuperAdmin}
-        profilePath={profilePath}
-      />
+      {loading ? (
+        <div className="flex gap-2 w-screen h-screen m-auto justify-center items-center">
+          <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+          <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+          <div className="w-5 h-5 rounded-full animate-pulse bg-green-600"></div>
+        </div>
+      ) : (
+        <>
+          <AppBar
+            operatorName={operatorName}
+            isSuperAdmin={isSuperAdmin}
+            profilePath={profilePath}
+          />
+        </>
+      )}
     </main>
   );
 }

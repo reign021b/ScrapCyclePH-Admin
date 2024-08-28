@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import CanvasJSReact from "@canvasjs/react-charts";
 
-const { CanvasJS, CanvasJSChart } = CanvasJSReact;
+const { CanvasJSChart } = CanvasJSReact;
 
 const PieChart = ({
   totalPayments,
@@ -32,9 +32,15 @@ const PieChart = ({
     return ((value / totalPayments) * 100).toFixed(2);
   };
 
-  const bookingFeePercentage = calculatePercentage(totalBookingFee);
-  const penaltiesPercentage = calculatePercentage(totalPenalties);
-  const commissionPercentage = calculatePercentage(totalCommission);
+  const bookingFeePercentage = parseFloat(calculatePercentage(totalBookingFee));
+  const penaltiesPercentage = parseFloat(calculatePercentage(totalPenalties));
+  const commissionPercentage = parseFloat(calculatePercentage(totalCommission));
+
+  // Check if all values are 0
+  const allValuesZero =
+    bookingFeePercentage === 0 &&
+    penaltiesPercentage === 0 &&
+    commissionPercentage === 0;
 
   // Set chart options
   const options = {
@@ -53,17 +59,17 @@ const PieChart = ({
         indexLabelMaxWidth: 100,
         dataPoints: [
           {
-            y: parseFloat(bookingFeePercentage),
+            y: bookingFeePercentage,
             label: "Booking Fee",
             color: "#2D9CDB",
           },
           {
-            y: parseFloat(penaltiesPercentage),
+            y: penaltiesPercentage,
             label: "Penalties",
             color: "#EB5757",
           },
           {
-            y: parseFloat(commissionPercentage),
+            y: commissionPercentage,
             label: "Commission",
             color: "#27AE60",
           },
@@ -78,8 +84,15 @@ const PieChart = ({
   };
 
   return (
-    <div style={{ width: "350px", height: "350px" }}>
-      <CanvasJSChart options={options} />
+    <div
+      className="flex justify-center items-center"
+      style={{ width: "350px", height: "350px", textAlign: "center" }}
+    >
+      {allValuesZero ? (
+        <div className="text-sm font-semibold">No data available.</div>
+      ) : (
+        <CanvasJSChart options={options} />
+      )}
       <style jsx global>{`
         .canvasjs-chart-credit {
           display: none !important;
