@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
-import AppBar from "/src/app/components/AppBar";
+import AppBar from "@/src/app/components/AppBar";
 import { FaCalendarAlt, FaMapMarkerAlt } from "react-icons/fa";
-import PieChart from "../components/PieChart";
+import PieChart from "@/src/app/components/PieChart";
 import DatePicker from "react-datepicker";
 import { format, parseISO } from "date-fns"; // Import the format function
 import "react-datepicker/dist/react-datepicker.css";
