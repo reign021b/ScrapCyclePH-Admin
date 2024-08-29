@@ -33,10 +33,11 @@ const formatDate = (dateStr) => {
     : "Invalid Date";
 };
 
-const ActiveCollector = ({ activeCity, selectedDate }) => {
+const ActiveCollector = ({ activeCity, selectedDate, onLinerIdSelect }) => {
   const [summaryData, setSummaryData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [selectedLinerId, setSelectedLinerId] = useState(null); // New state for selected liner
 
   useEffect(() => {
     const getData = async () => {
@@ -58,6 +59,17 @@ const ActiveCollector = ({ activeCity, selectedDate }) => {
 
     getData();
   }, [activeCity, selectedDate]); // Re-run the effect when activeCity or selectedDate changes
+
+  const handleLinerClick = (linerId) => {
+    // Toggle selection
+    if (selectedLinerId === linerId) {
+      setSelectedLinerId(null); // Unselect if already selected
+      onLinerIdSelect(null); // Notify parent to clear selection
+    } else {
+      setSelectedLinerId(linerId); // Select new liner
+      onLinerIdSelect(linerId); // Notify parent of new selection
+    }
+  };
 
   if (loading) {
     return <p className="text-center mt-5">Loading data...</p>;
@@ -88,7 +100,10 @@ const ActiveCollector = ({ activeCity, selectedDate }) => {
           return (
             <button
               key={index}
-              className="border p-5 m-4 rounded-md transition duration-100 hover:bg-gray-50 w-full text-left focus:outline-none focus:ring-2 focus:ring-blue-500 mx-2"
+              className={`border p-5 m-4 rounded-md transition duration-100 hover:bg-gray-50 w-full text-left focus:outline-none focus:ring-2 ${
+                selectedLinerId === item.liner_id ? "bg-blue-100" : "bg-white"
+              }`}
+              onClick={() => handleLinerClick(item.liner_id)}
             >
               <div className="flex mb-3">
                 <Image
