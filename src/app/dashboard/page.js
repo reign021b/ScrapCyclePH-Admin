@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
 import AppBar from "/src/app/components/AppBar";
-import { FaCalendarAlt, FaMapMarkerAlt } from "react-icons/fa";
+import { FaCalendarAlt, FaMapMarkerAlt, FaBuilding } from "react-icons/fa";
 import PieChart from "../components/PieChart";
 import DatePicker from "react-datepicker";
 import { format, parseISO } from "date-fns"; // Import the format function
@@ -320,6 +320,7 @@ export default function Dashboard() {
                 This is your overview of this month&apos;s performance.
               </p>
             </div>
+
             <div className="flex relative">
               <button
                 className="items-center flex border rounded-xl px-3 py-[6px] mr-4"
@@ -346,6 +347,14 @@ export default function Dashboard() {
                   </ul>
                 </div>
               )}
+
+              <button className="items-center flex border rounded-xl px-3 py-[6px] mr-4">
+                <FaBuilding />
+                <div>
+                  <p className="px-4 text-xs font-semibold">All Junkshops</p>
+                </div>
+              </button>
+
               <div
                 className="flex items-center border rounded-xl px-3 py-[6px] mr-4"
                 style={{ width: "170px" }}

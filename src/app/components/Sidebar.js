@@ -11,6 +11,7 @@ const Sidebar = ({
   selectedBookingId,
   selectedDate,
   onClose,
+  onLinerIdSelect,
 }) => {
   return (
     <div className="min-w-[31rem] max-w-[31rem] border-r flex flex-col justify-between h-full">
@@ -20,6 +21,7 @@ const Sidebar = ({
           <ActiveCollector
             activeCity={activeCity}
             selectedDate={selectedDate}
+            onLinerIdSelect={onLinerIdSelect}
           />
         )}
 

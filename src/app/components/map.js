@@ -19,7 +19,7 @@ const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
   ssr: false,
 });
 
-const Map = ({ bookings = [], setSelectedBookingId, activeCity }) => {
+const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
   const [L, setL] = useState(null);
 
   useEffect(() => {
@@ -85,6 +85,13 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity }) => {
     setSelectedBookingId(bookingId);
   };
 
+  // Filter bookings based on the linerId
+  const filteredBookings = useMemo(() => {
+    if (!linerId) return bookings; // Check for null or undefined
+    const result = bookings.filter((booking) => booking.liner_id === linerId);
+    return result;
+  }, [bookings, linerId]);
+
   const mapKey = `${activeCity}-${center[0]}-${center[1]}`;
 
   if (!L) {
@@ -104,7 +111,7 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity }) => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        {bookings.map((booking) => {
+        {filteredBookings.map((booking) => {
           const coordinatesString = booking.coordinates;
 
           if (!coordinatesString || !coordinatesString.includes(","))
