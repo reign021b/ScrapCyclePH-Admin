@@ -3,6 +3,12 @@ import React, { useState } from "react";
 const CommissionCard = ({ totalCommission }) => {
   const [activeIndex, setActiveIndex] = useState(5);
 
+  // Ensure totalCommission is an array
+  if (!Array.isArray(totalCommission)) {
+    console.error("Invalid totalCommission: expected an array");
+    return null;
+  }
+
   // Find the highest value in totalCommission
   const highestTotalCommission = Math.max(...totalCommission.map(Number));
 
@@ -34,6 +40,12 @@ const CommissionCard = ({ totalCommission }) => {
         : "-100%"
       : `${Math.abs(percentage)}%`;
 
+  // Ensure totalCommission[activeIndex] is a number
+  const currentCommission =
+    typeof totalCommission[activeIndex] === "number"
+      ? totalCommission[activeIndex]
+      : 0;
+
   return (
     <div className="mb-4">
       <div className="cols-span-1 w-full border rounded-t-xl mr-5">
@@ -46,9 +58,7 @@ const CommissionCard = ({ totalCommission }) => {
             <div className="flex items-end justify-between">
               <p className="text-3xl font-semibold">
                 {(() => {
-                  const [integerPart, decimalPart] = totalCommission[
-                    activeIndex
-                  ]
+                  const [integerPart, decimalPart] = currentCommission
                     .toFixed(2)
                     .split(".");
                   return (
@@ -71,7 +81,8 @@ const CommissionCard = ({ totalCommission }) => {
                       id={index.toString()}
                       className={`ml-2 pt-[20px] rounded-lg w-[24px] ${
                         index === activeIndex ? "bg-[#27AE60]" : "bg-gray-300"
-                      } hover:bg-[#27AE60] h-[${barHeight}px]`}
+                      } hover:bg-[#27AE60]`}
+                      style={{ height: `${barHeight}px` }} // Apply dynamic height
                       onMouseEnter={() => setActiveIndex(index)}
                       onMouseLeave={() => setActiveIndex(5)}
                     >

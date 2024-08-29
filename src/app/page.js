@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
 import StatsBar from "./components/StatsBar";
 import Sidebar from "./components/Sidebar";
-import Map from "./components/map";
+import Map from "./components/Map";
 import AppBar from "./components/AppBar";
 
 export default function Home() {
@@ -30,6 +30,8 @@ export default function Home() {
   };
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const fetchOperator = async (session) => {
       try {
         const { data: operators, error: operatorError } = await supabase

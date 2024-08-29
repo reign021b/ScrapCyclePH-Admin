@@ -9,13 +9,16 @@ const PenaltiesCard = ({ totalPenalties }) => {
     return null;
   }
 
+  // Ensure totalPenalties contains valid numbers
+  const numericTotalPenalties = totalPenalties.map(Number);
+
   // Find the highest value in totalPenalties
-  const highestTotalPenalties = Math.max(...totalPenalties.map(Number));
+  const highestTotalPenalties = Math.max(...numericTotalPenalties);
 
   // Calculate the percentage change
   const calculatePercentageChange = () => {
-    const previousMonth = totalPenalties[4] || 0;
-    const currentMonth = totalPenalties[5] || 0;
+    const previousMonth = numericTotalPenalties[4] || 0;
+    const currentMonth = numericTotalPenalties[5] || 0;
 
     if (previousMonth === 0 && currentMonth === 0)
       return { percentage: 0, isPositive: true };
@@ -40,6 +43,12 @@ const PenaltiesCard = ({ totalPenalties }) => {
         : "-100%"
       : `${Math.abs(percentage)}%`;
 
+  // Ensure totalPenalties[activeIndex] is a number
+  const currentPenalty =
+    typeof numericTotalPenalties[activeIndex] === "number"
+      ? numericTotalPenalties[activeIndex]
+      : 0;
+
   return (
     <div className="w-full mr-5">
       <div className="w-full border rounded-t-xl pt-3">
@@ -51,7 +60,7 @@ const PenaltiesCard = ({ totalPenalties }) => {
           <div className="flex items-end justify-between">
             <p className="text-3xl font-semibold">
               {(() => {
-                const [integerPart, decimalPart] = totalPenalties[activeIndex]
+                const [integerPart, decimalPart] = currentPenalty
                   .toFixed(2)
                   .split(".");
                 return (
@@ -62,8 +71,8 @@ const PenaltiesCard = ({ totalPenalties }) => {
                 );
               })()}
             </p>
-            <div className="flex items-end justify-between h-[86px]  pt-[20px]">
-              {totalPenalties.map((penalty, index) => {
+            <div className="flex items-end justify-between h-[86px] pt-[20px]">
+              {numericTotalPenalties.map((penalty, index) => {
                 // Calculate dynamic height
                 const barHeight =
                   penalty === 0 ? 10 : (penalty / highestTotalPenalties) * 66;
@@ -73,9 +82,10 @@ const PenaltiesCard = ({ totalPenalties }) => {
                     <div
                       className={`rounded-lg ${
                         index === activeIndex ? "bg-[#EB5757]" : "bg-gray-300"
-                      } hover:bg-[#EB5757] w-[24px] h-[${barHeight}px] pt-5`}
+                      } hover:bg-[#EB5757] w-[24px] pt-5`}
+                      style={{ height: `${barHeight}px` }} // Use inline styles for dynamic height
                       onMouseEnter={() => setActiveIndex(index)}
-                      onMouseLeave={() => setActiveIndex(5)}
+                      onMouseLeave={() => setActiveIndex(5)} // Ensure to pass 5 to reset
                     >
                       &nbsp;
                     </div>

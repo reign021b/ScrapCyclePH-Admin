@@ -1,13 +1,35 @@
-import { useMemo, useEffect } from "react";
-import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
-import L, { Icon } from "leaflet";
+import { useMemo, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 
-const Map = ({ bookings = [], setSelectedBookingId, activeCity }) => {
-  // Define default center coordinates if needed
-  const defaultCenter = [8.948061991080413, 125.54020391156156]; // Default center
+// Dynamically import MapContainer and other components from react-leaflet
+const MapContainer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import("react-leaflet").then((mod) => mod.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamic(
+  () => import("react-leaflet").then((mod) => mod.Marker),
+  { ssr: false }
+);
+const Popup = dynamic(() => import("react-leaflet").then((mod) => mod.Popup), {
+  ssr: false,
+});
 
-  // Determine the center based on activeCity
+const Map = ({ bookings = [], setSelectedBookingId, activeCity }) => {
+  const [L, setL] = useState(null);
+
+  useEffect(() => {
+    import("leaflet").then((leaflet) => {
+      setL(leaflet.default);
+    });
+  }, []);
+
+  const defaultCenter = [8.948061991080413, 125.54020391156156];
+
   const center = useMemo(() => {
     switch (activeCity) {
       case "Butuan City":
@@ -15,87 +37,64 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity }) => {
       case "Davao City":
         return [7.093545, 125.599351];
       default:
-        return defaultCenter; // Fallback to default center if activeCity doesn't match
+        return defaultCenter;
     }
   }, [activeCity]);
 
-  // Define icons using useMemo for performance
-  const cancelledIcon = useMemo(
-    () =>
-      new Icon({
-        iconUrl:
-          "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/cancelled-gif.gif",
-        iconSize: [32, 32],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32],
-      }),
-    []
-  );
-
-  const completedIcon = useMemo(
-    () =>
-      new Icon({
-        iconUrl:
-          "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/completed-gif.gif",
-        iconSize: [35, 40],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32],
-      }),
-    []
-  );
-
-  const pendingIcon = useMemo(
-    () =>
-      new Icon({
-        iconUrl:
-          "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/pending-gif-2.gif",
-        iconSize: [35, 38],
-        iconAnchor: [16, 32],
-        popupAnchor: [0, -32],
-      }),
-    []
-  );
-
-  const assignIcon = useMemo(
-    () =>
-      new Icon({
-        iconUrl:
-          "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/assign-liner.gif",
-        iconSize: [42, 40],
-        iconAnchor: [26, 42],
-        popupAnchor: [0, -32],
-      }),
-    []
-  );
-
-  // Determine icon based on booking status
-  const getIcon = (booking) => {
-    if (booking.cancelled === true) {
-      return cancelledIcon;
-    } else if (booking.liner_id === null) {
-      return assignIcon;
-    } else if (booking.status === "true") {
-      return completedIcon;
-    } else {
-      return pendingIcon;
+  const createIcon = (iconUrl, size) => {
+    if (!L) return null;
+    try {
+      return L.icon({
+        iconUrl,
+        iconSize: size,
+        iconAnchor: [size[0] / 2, size[1]],
+        popupAnchor: [0, -size[1]],
+      });
+    } catch (error) {
+      console.error("Error creating icon:", error);
+      return null;
     }
   };
 
-  // Handle marker click
+  const getIcon = (booking) => {
+    if (!L) return null;
+    if (booking.cancelled === true) {
+      return createIcon(
+        "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/cancelled-gif.gif",
+        [32, 32]
+      );
+    } else if (booking.liner_id === null) {
+      return createIcon(
+        "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/assign-liner.gif",
+        [42, 40]
+      );
+    } else if (booking.status === "true") {
+      return createIcon(
+        "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/completed-gif.gif",
+        [35, 40]
+      );
+    } else {
+      return createIcon(
+        "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/pending-gif-2.gif",
+        [35, 38]
+      );
+    }
+  };
+
   const handleMarkerClick = (bookingId) => {
     setSelectedBookingId(bookingId);
   };
 
-  // Debug logs
-  useEffect(() => {}, [activeCity, center]);
-
-  // Force map component to re-render when center changes
   const mapKey = `${activeCity}-${center[0]}-${center[1]}`;
+
+  if (!L) {
+    return <div>Loading map...</div>;
+  }
 
   return (
     <div className="w-full h-full">
       <MapContainer
-        key={mapKey} // Use a unique key to force remount
+        key={mapKey}
         style={{ height: "100%", width: "100%" }}
         center={center}
         zoom={13}
@@ -111,11 +110,9 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity }) => {
           if (!coordinatesString || !coordinatesString.includes(","))
             return null;
 
-          // Assuming coordinates are in the format "latitude, longitude"
           const [latitudeStr, longitudeStr] = coordinatesString
             .split(",")
             .map((str) => str.trim());
-
           const latitude = parseFloat(latitudeStr);
           const longitude = parseFloat(longitudeStr);
 

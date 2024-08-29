@@ -9,13 +9,16 @@ const BookingFeeCard = ({ totalBookingFee }) => {
     return null;
   }
 
+  // Ensure totalBookingFee contains valid numbers
+  const numericTotalBookingFee = totalBookingFee.map(Number);
+
   // Find the highest value in totalBookingFee
-  const highestTotalBookingFee = Math.max(...totalBookingFee.map(Number));
+  const highestTotalBookingFee = Math.max(...numericTotalBookingFee);
 
   // Calculate the percentage change
   const calculatePercentageChange = () => {
-    const previousMonth = totalBookingFee[4] || 0;
-    const currentMonth = totalBookingFee[5] || 0;
+    const previousMonth = numericTotalBookingFee[4] || 0;
+    const currentMonth = numericTotalBookingFee[5] || 0;
 
     if (previousMonth === 0 && currentMonth === 0)
       return { percentage: 0, isPositive: true };
@@ -35,6 +38,12 @@ const BookingFeeCard = ({ totalBookingFee }) => {
     percentage === 0 ? "0%" : `${Math.abs(percentage)}%`;
   const sign = percentage === 0 ? "" : isPositive ? "+" : "-";
 
+  // Ensure totalBookingFee[activeIndex] is a number
+  const currentBookingFee =
+    typeof numericTotalBookingFee[activeIndex] === "number"
+      ? numericTotalBookingFee[activeIndex]
+      : 0;
+
   return (
     <div className="mb-4">
       <div className="cols-span-1 w-full border rounded-t-xl mr-5">
@@ -47,9 +56,7 @@ const BookingFeeCard = ({ totalBookingFee }) => {
             <div className="flex items-end justify-between">
               <p className="text-3xl font-semibold">
                 {(() => {
-                  const [integerPart, decimalPart] = totalBookingFee[
-                    activeIndex
-                  ]
+                  const [integerPart, decimalPart] = currentBookingFee
                     .toFixed(2)
                     .split(".");
                   return (
@@ -61,7 +68,7 @@ const BookingFeeCard = ({ totalBookingFee }) => {
                 })()}
               </p>
               <div className="flex items-end pt-5 h-[86px]">
-                {totalBookingFee.map((fee, index) => {
+                {numericTotalBookingFee.map((fee, index) => {
                   // Calculate dynamic height
                   const barHeight =
                     fee === 0 ? 10 : (fee / highestTotalBookingFee) * 66;
@@ -72,7 +79,8 @@ const BookingFeeCard = ({ totalBookingFee }) => {
                       id={index.toString()}
                       className={`ml-2 pt-[20px] rounded-lg w-[24px] ${
                         index === activeIndex ? "bg-[#2D9CDB]" : "bg-gray-300"
-                      } hover:bg-[#2D9CDB] h-[${barHeight}px]`}
+                      } hover:bg-[#2D9CDB]`}
+                      style={{ height: `${barHeight}px` }} // Apply dynamic height
                       onMouseEnter={() => setActiveIndex(index)}
                       onMouseLeave={() => setActiveIndex(5)}
                     >
