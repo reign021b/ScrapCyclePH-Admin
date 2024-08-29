@@ -9,13 +9,16 @@ const PenaltiesCard = ({ totalPenalties }) => {
     return null;
   }
 
+  // Ensure totalPenalties contains valid numbers
+  const numericTotalPenalties = totalPenalties.map(Number);
+
   // Find the highest value in totalPenalties
-  const highestTotalPenalties = Math.max(...totalPenalties.map(Number));
+  const highestTotalPenalties = Math.max(...numericTotalPenalties);
 
   // Calculate the percentage change
   const calculatePercentageChange = () => {
-    const previousMonth = totalPenalties[4] || 0;
-    const currentMonth = totalPenalties[5] || 0;
+    const previousMonth = numericTotalPenalties[4] || 0;
+    const currentMonth = numericTotalPenalties[5] || 0;
 
     if (previousMonth === 0 && currentMonth === 0)
       return { percentage: 0, isPositive: true };
@@ -42,8 +45,8 @@ const PenaltiesCard = ({ totalPenalties }) => {
 
   // Ensure totalPenalties[activeIndex] is a number
   const currentPenalty =
-    typeof totalPenalties[activeIndex] === "number"
-      ? totalPenalties[activeIndex]
+    typeof numericTotalPenalties[activeIndex] === "number"
+      ? numericTotalPenalties[activeIndex]
       : 0;
 
   return (
@@ -69,7 +72,7 @@ const PenaltiesCard = ({ totalPenalties }) => {
               })()}
             </p>
             <div className="flex items-end justify-between h-[86px] pt-[20px]">
-              {totalPenalties.map((penalty, index) => {
+              {numericTotalPenalties.map((penalty, index) => {
                 // Calculate dynamic height
                 const barHeight =
                   penalty === 0 ? 10 : (penalty / highestTotalPenalties) * 66;
@@ -82,7 +85,7 @@ const PenaltiesCard = ({ totalPenalties }) => {
                       } hover:bg-[#EB5757] w-[24px] pt-5`}
                       style={{ height: `${barHeight}px` }} // Use inline styles for dynamic height
                       onMouseEnter={() => setActiveIndex(index)}
-                      onMouseLeave={() => setActiveIndex(null)} // Ensure to pass null to reset
+                      onMouseLeave={() => setActiveIndex(5)} // Ensure to pass 5 to reset
                     >
                       &nbsp;
                     </div>

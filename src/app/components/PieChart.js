@@ -1,7 +1,4 @@
 import React, { useEffect, useState } from "react";
-import CanvasJSReact from "@canvasjs/react-charts";
-
-const { CanvasJSChart } = CanvasJSReact;
 
 const PieChart = ({
   totalPayments,
@@ -9,17 +6,22 @@ const PieChart = ({
   totalBookingFee,
   totalPenalties,
 }) => {
-  const [isBrowser, setIsBrowser] = useState(false);
+  const [CanvasJSChart, setCanvasJSChart] = useState(null);
 
   useEffect(() => {
-    setIsBrowser(true);
+    import("@canvasjs/react-charts")
+      .then((module) => {
+        if (module.CanvasJSChart) {
+          setCanvasJSChart(() => module.CanvasJSChart);
+        } else if (module.default && module.default.CanvasJSChart) {
+          setCanvasJSChart(() => module.default.CanvasJSChart);
+        } else {
+          console.error("CanvasJSChart not found in the imported module");
+        }
+      })
+      .catch((error) => console.error("Error importing CanvasJSChart:", error));
   }, []);
 
-  if (!isBrowser) {
-    return null; // or some fallback UI
-  }
-
-  // Calculate percentages or default to 0 if totalPayments is 0 or any value is undefined
   const calculatePercentage = (value) => {
     if (
       !totalPayments ||
@@ -36,13 +38,11 @@ const PieChart = ({
   const penaltiesPercentage = parseFloat(calculatePercentage(totalPenalties));
   const commissionPercentage = parseFloat(calculatePercentage(totalCommission));
 
-  // Check if all values are 0
   const allValuesZero =
     bookingFeePercentage === 0 &&
     penaltiesPercentage === 0 &&
     commissionPercentage === 0;
 
-  // Set chart options
   const options = {
     exportEnabled: false,
     animationEnabled: true,
@@ -90,8 +90,10 @@ const PieChart = ({
     >
       {allValuesZero ? (
         <div className="text-sm font-semibold">No data available.</div>
-      ) : (
+      ) : CanvasJSChart ? (
         <CanvasJSChart options={options} />
+      ) : (
+        <div>Loading chart...</div>
       )}
       <style jsx global>{`
         .canvasjs-chart-credit {

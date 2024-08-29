@@ -30,6 +30,8 @@ export default function Home() {
   };
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
     const fetchOperator = async (session) => {
       try {
         const { data: operators, error: operatorError } = await supabase
