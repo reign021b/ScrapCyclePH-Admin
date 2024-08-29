@@ -20,6 +20,11 @@ export default function Home() {
   const [selectedBookingId, setSelectedBookingId] = useState(null);
   const today = new Date().toISOString().split("T")[0]; // Format YYYY-MM-DD
   const [selectedDate, setSelectedDate] = useState(today);
+  const [selectedLinerId, setSelectedLinerId] = useState(null);
+
+  const handleLinerId = (linerId) => {
+    setSelectedLinerId(linerId);
+  };
 
   const handleClose = () => {
     setSelectedBookingId(null);
@@ -163,11 +168,13 @@ export default function Home() {
               setSelectedBookingId={setSelectedBookingId}
               selectedDate={selectedDate}
               onClose={handleClose}
+              onLinerIdSelect={handleLinerId}
             />
             <Map
               bookings={filteredBookings}
               setSelectedBookingId={setSelectedBookingId}
               activeCity={activeCity}
+              linerId={selectedLinerId}
             />
           </div>
         </>

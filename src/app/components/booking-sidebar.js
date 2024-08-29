@@ -212,7 +212,7 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
           }`}
         >
           <div className="font-semibold text-black text-right mr-3">STATUS</div>
-          <p
+          <div
             className={`${
               selectedBooking.cancelled === true
                 ? "text-red-500"
@@ -232,39 +232,39 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
               : selectedBooking.status === "true"
               ? "Completed"
               : "Incomplete"}
-          </p>
+          </div>
         </div>
 
-        <p className="font-semibold m-3 text-black">
+        <div className="font-semibold m-3 text-black">
           {selectedBooking.address_name}
-        </p>
+        </div>
 
         <div className="text-sm grid grid-cols-2 border-b w-full pb-3 m-2">
-          <p className="font-bold m-3 text-black">
+          <div className="font-bold m-3 text-black">
             Waste Type: <br />
-            <div className="text-gray-500 font-normal mt-1">
+            <p className="text-gray-500 font-normal mt-1">
               {selectedBooking["waste_type"]}
-            </div>
-          </p>
+            </p>
+          </div>
 
-          <p className="font-bold m-3 text-black">
+          <div className="font-bold m-3 text-black">
             Large Recyclables: <br />
-            <div className="font-normal text-gray-500 mt-1">
+            <p className="font-normal text-gray-500 mt-1">
               {selectedBooking.large_recyclables ? "Yes" : "No"}
-            </div>
-          </p>
-          <p className="font-bold m-3 text-black">
+            </p>
+          </div>
+          <div className="font-bold m-3 text-black">
             Item Types: <br />
-            <div className="font-normal text-gray-500 mt-1">
+            <p className="font-normal text-gray-500 mt-1">
               {selectedBooking["item_types"]?.join(", ")}
-            </div>
-          </p>
-          <p className="font-bold m-3 text-black">
+            </p>
+          </div>
+          <div className="font-bold m-3 text-black">
             Estimated Weight: <br />
-            <div className="font-normal text-gray-500 mt-1">
+            <p className="font-normal text-gray-500 mt-1">
               {selectedBooking["Estimated Weight"]} kg
-            </div>
-          </p>
+            </p>
+          </div>
         </div>
 
         <ul className="mt-5 text-sm">
