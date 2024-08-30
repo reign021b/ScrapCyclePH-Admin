@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const PenaltiesCard = ({ totalPenalties }) => {
+const PenaltiesCard = ({ totalPenalties, selectedDateType }) => {
   const [activeIndex, setActiveIndex] = useState(5);
 
   // Ensure totalPenalties is an array
@@ -17,16 +17,16 @@ const PenaltiesCard = ({ totalPenalties }) => {
 
   // Calculate the percentage change
   const calculatePercentageChange = () => {
-    const previousMonth = numericTotalPenalties[4] || 0;
-    const currentMonth = numericTotalPenalties[5] || 0;
+    const previousPeriod = numericTotalPenalties[4] || 0;
+    const currentPeriod = numericTotalPenalties[5] || 0;
 
-    if (previousMonth === 0 && currentMonth === 0)
+    if (previousPeriod === 0 && currentPeriod === 0)
       return { percentage: 0, isPositive: true };
-    if (previousMonth === 0) return { percentage: 100, isPositive: true };
-    if (currentMonth === 0) return { percentage: -100, isPositive: false };
+    if (previousPeriod === 0) return { percentage: 100, isPositive: true };
+    if (currentPeriod === 0) return { percentage: -100, isPositive: false };
 
     const percentageChange =
-      ((currentMonth - previousMonth) / previousMonth) * 100;
+      ((currentPeriod - previousPeriod) / previousPeriod) * 100;
     return {
       percentage: parseFloat(percentageChange.toFixed(2)),
       isPositive: percentageChange >= 0,
@@ -49,13 +49,46 @@ const PenaltiesCard = ({ totalPenalties }) => {
       ? numericTotalPenalties[activeIndex]
       : 0;
 
+  // Determine the label for the period
+  const getPeriodLabel = () => {
+    switch (selectedDateType) {
+      case "yearly":
+        return "years";
+      case "monthly":
+        return "months";
+      case "daily":
+        return "days";
+      case "weekly":
+        return "weeks";
+      default:
+        return "months";
+    }
+  };
+
+  // Determine the comparison text
+  const getComparisonText = () => {
+    switch (selectedDateType) {
+      case "yearly":
+        return "Compared to previous year";
+      case "monthly":
+        return "Compared to previous month";
+      case "daily":
+        return "Compared to previous day";
+      case "weekly":
+        return "Compared to previous week";
+      default:
+        return "Compared to previous month";
+    }
+  };
+
   return (
     <div className="w-full mr-5">
       <div className="w-full border rounded-t-xl pt-3">
         <div className="px-5 py-3">
           <p className="font-bold">Penalties</p>
           <p className="text-xs">
-            This is your overview of the penalties for the past 6 months.
+            This is your overview of the penalties for the past 6{" "}
+            {getPeriodLabel()}.
           </p>
           <div className="flex items-end justify-between">
             <p className="text-3xl font-semibold">
@@ -112,7 +145,7 @@ const PenaltiesCard = ({ totalPenalties }) => {
           </div>
         </div>
         <div className="text-[10px] flex justify-center items-center">
-          Compared to previous month
+          {getComparisonText()}
         </div>
       </div>
     </div>
