@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-const BookingFeeCard = ({ totalBookingFee }) => {
+const BookingFeeCard = ({ totalBookingFee, selectedDateType }) => {
   const [activeIndex, setActiveIndex] = useState(5);
 
   // Ensure totalBookingFee is an array
@@ -17,16 +17,16 @@ const BookingFeeCard = ({ totalBookingFee }) => {
 
   // Calculate the percentage change
   const calculatePercentageChange = () => {
-    const previousMonth = numericTotalBookingFee[4] || 0;
-    const currentMonth = numericTotalBookingFee[5] || 0;
+    const previousPeriod = numericTotalBookingFee[4] || 0;
+    const currentPeriod = numericTotalBookingFee[5] || 0;
 
-    if (previousMonth === 0 && currentMonth === 0)
+    if (previousPeriod === 0 && currentPeriod === 0)
       return { percentage: 0, isPositive: true };
-    if (previousMonth === 0) return { percentage: 100, isPositive: true };
-    if (currentMonth === 0) return { percentage: -100, isPositive: false };
+    if (previousPeriod === 0) return { percentage: 100, isPositive: true };
+    if (currentPeriod === 0) return { percentage: -100, isPositive: false };
 
     const percentageChange =
-      ((currentMonth - previousMonth) / previousMonth) * 100;
+      ((currentPeriod - previousPeriod) / previousPeriod) * 100;
     return {
       percentage: parseFloat(percentageChange.toFixed(2)),
       isPositive: percentageChange >= 0,
@@ -44,6 +44,38 @@ const BookingFeeCard = ({ totalBookingFee }) => {
       ? numericTotalBookingFee[activeIndex]
       : 0;
 
+  // Determine the label for the period
+  const getPeriodLabel = () => {
+    switch (selectedDateType) {
+      case "yearly":
+        return "years";
+      case "monthly":
+        return "months";
+      case "daily":
+        return "days";
+      case "weekly":
+        return "weeks";
+      default:
+        return "months";
+    }
+  };
+
+  // Determine the comparison text
+  const getComparisonText = () => {
+    switch (selectedDateType) {
+      case "yearly":
+        return "Compared to previous year";
+      case "monthly":
+        return "Compared to previous month";
+      case "daily":
+        return "Compared to previous day";
+      case "weekly":
+        return "Compared to previous week";
+      default:
+        return "Compared to previous month";
+    }
+  };
+
   return (
     <div className="mb-4">
       <div className="cols-span-1 w-full border rounded-t-xl mr-5">
@@ -51,7 +83,8 @@ const BookingFeeCard = ({ totalBookingFee }) => {
           <div className="px-5 py-3">
             <p className="font-bold">Booking Fee</p>
             <p className="text-xs">
-              This is your overview of the booking fees for the past 6 months.
+              This is your overview of the booking fees for the past 6{" "}
+              {getPeriodLabel()}.
             </p>
             <div className="flex items-end justify-between">
               <p className="text-3xl font-semibold">
@@ -110,7 +143,7 @@ const BookingFeeCard = ({ totalBookingFee }) => {
             </div>
           </div>
           <div className="text-[10px] flex justify-center items-center">
-            Compared to previous month
+            {getComparisonText()}
           </div>
         </div>
       </div>
