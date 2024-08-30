@@ -41,7 +41,6 @@ export default function Dashboard() {
   const [cities, setCities] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedCity, setSelectedCity] = useState("Davao City");
-  const [startDate, setStartDate] = useState(new Date());
   const [totalPayments, setTotalPayments] = useState(0);
   const [totalCommission, setTotalCommission] = useState(Array(6).fill(0));
   const [totalBookingFee, setTotalBookingFee] = useState(Array(6).fill(0));
@@ -49,8 +48,13 @@ export default function Dashboard() {
   const [totalReceivables, setTotalReceivables] = useState(0);
   const [recentPayments, setRecentPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [startDate, setStartDate] = useState(new Date());
   const [selectedDateType, setSelectedDateType] = useState("monthly");
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleDateChange = (date) => {
+    setStartDate(date);
+  };
 
   const handleDropdownToggle = () => {
     setIsOpen(!isOpen);
@@ -60,6 +64,35 @@ export default function Dashboard() {
     setSelectedDateType(dateType);
     setIsOpen(false);
   };
+
+  const getDatePickerProps = () => {
+    switch (selectedDateType) {
+      case "yearly":
+        return {
+          dateFormat: "yyyy",
+          showYearPicker: true,
+          showMonthYearPicker: false,
+          showDayPicker: false,
+        };
+      case "monthly":
+        return {
+          dateFormat: "MMMM yyyy",
+          showMonthYearPicker: true,
+          showDayPicker: false,
+        };
+      case "weekly":
+      case "daily":
+        return {
+          dateFormat: "MMMM d, yyyy",
+          showMonthYearPicker: false,
+          showDayPicker: true,
+        };
+      default:
+        return {};
+    }
+  };
+
+  const datePickerProps = getDatePickerProps();
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -96,69 +129,24 @@ export default function Dashboard() {
 
     const fetchTotalPayments = async () => {
       try {
-        let dateRange;
-
         // Ensure startDate is a valid Date object
         const validStartDate =
           startDate instanceof Date && !isNaN(startDate.getTime())
             ? startDate
             : new Date();
 
-        switch (selectedDateType || "monthly") {
-          case "yearly":
-            dateRange = eachYearOfInterval({
-              start: new Date(validStartDate.getFullYear() - 5, 0, 1),
-              end: new Date(validStartDate.getFullYear(), 11, 31),
-            }).map((date) => format(date, "yyyy"));
-            break;
+        const formattedStartDate = format(validStartDate, "yyyy-MM-dd");
+        const formattedStartMonth = format(validStartDate, "yyyy-MM");
+        const formattedStartYear = format(validStartDate, "yyyy");
 
-          case "monthly":
-            dateRange = eachMonthOfInterval({
-              start: startOfMonth(
-                new Date(
-                  validStartDate.getFullYear(),
-                  validStartDate.getMonth() - 5,
-                  1
-                )
-              ),
-              end: endOfMonth(validStartDate),
-            }).map((date) => format(date, "yyyy-MM"));
-            break;
+        // Calculate weekly range based on the startDate
+        const startOfWeekDate = startOfWeek(validStartDate, {
+          weekStartsOn: 1,
+        });
+        const endOfWeekDate = endOfWeek(validStartDate, { weekStartsOn: 1 });
 
-          case "daily":
-            dateRange = eachDayOfInterval({
-              start: startOfDay(
-                new Date(validStartDate.setDate(validStartDate.getDate() - 30))
-              ),
-              end: endOfDay(new Date()),
-            }).map((date) => format(date, "yyyy-MM-dd"));
-            break;
-
-          case "weekly":
-            dateRange = eachWeekOfInterval({
-              start: startOfWeek(
-                new Date(validStartDate.setDate(validStartDate.getDate() - 42)),
-                { weekStartsOn: 1 }
-              ),
-              end: endOfWeek(new Date(), { weekStartsOn: 1 }),
-            }).map((date) => ({
-              start: format(date, "yyyy-MM-dd"),
-              end: format(endOfWeek(date, { weekStartsOn: 1 }), "yyyy-MM-dd"),
-            }));
-            break;
-
-          default:
-            dateRange = eachMonthOfInterval({
-              start: startOfMonth(
-                new Date(
-                  validStartDate.getFullYear(),
-                  validStartDate.getMonth() - 5,
-                  1
-                )
-              ),
-              end: endOfMonth(validStartDate),
-            }).map((date) => format(date, "yyyy-MM"));
-        }
+        const formattedStartOfWeek = format(startOfWeekDate, "yyyy-MM-dd");
+        const formattedEndOfWeek = format(endOfWeekDate, "yyyy-MM-dd");
 
         const { data, error } = await supabase.rpc("get_total_payments");
 
@@ -169,20 +157,31 @@ export default function Dashboard() {
 
         const totalPayments = data.reduce((acc, item) => {
           const itemDate = new Date(item.schedule_date);
-
-          // Convert itemDate to format for comparison
           const formattedItemDate = format(itemDate, "yyyy-MM-dd");
-          const formattedStartDate = format(validStartDate, "yyyy-MM-dd");
 
-          const isMatchingDate =
-            selectedDateType === "daily"
-              ? formattedItemDate === formattedStartDate
-              : selectedDateType === "monthly"
-              ? format(itemDate, "yyyy-MM") ===
-                format(validStartDate, "yyyy-MM")
-              : selectedDateType === "yearly"
-              ? format(itemDate, "yyyy") === format(validStartDate, "yyyy")
-              : false;
+          let isMatchingDate = false;
+
+          switch (selectedDateType) {
+            case "daily":
+              isMatchingDate = formattedItemDate === formattedStartDate;
+              break;
+            case "monthly":
+              isMatchingDate =
+                format(itemDate, "yyyy-MM") === formattedStartMonth;
+              break;
+            case "yearly":
+              isMatchingDate = format(itemDate, "yyyy") === formattedStartYear;
+              break;
+            case "weekly":
+              isMatchingDate =
+                formattedItemDate >= formattedStartOfWeek &&
+                formattedItemDate <= formattedEndOfWeek;
+              break;
+            default:
+              isMatchingDate =
+                format(itemDate, "yyyy-MM") === formattedStartMonth;
+              break;
+          }
 
           return isMatchingDate && item.city === selectedCity
             ? acc + parseFloat(item.total_payment || 0)
@@ -192,7 +191,7 @@ export default function Dashboard() {
         setTotalPayments(totalPayments);
       } catch (error) {
         console.error("Error fetching total payments:", error.message || error);
-        setTotalPayments(0); // Default to 0 in case of error
+        setTotalPayments(0);
       }
     };
 
@@ -229,9 +228,9 @@ export default function Dashboard() {
           case "daily":
             dateRange = eachDayOfInterval({
               start: startOfDay(
-                new Date(currentDate.setDate(currentDate.getDate() - 5))
+                new Date(currentDate.getTime() - 5 * 24 * 60 * 60 * 1000)
               ),
-              end: endOfDay(new Date()),
+              end: endOfDay(currentDate),
             })
               .map((date) => format(date, "yyyy-MM-dd"))
               .slice(-6); // Limit to 6 days
@@ -240,10 +239,10 @@ export default function Dashboard() {
           case "weekly":
             const weeks = eachWeekOfInterval({
               start: startOfWeek(
-                new Date(currentDate.setDate(currentDate.getDate() - 42)),
+                new Date(currentDate.getTime() - 6 * 7 * 24 * 60 * 60 * 1000),
                 { weekStartsOn: 1 }
               ),
-              end: endOfWeek(new Date(), { weekStartsOn: 1 }),
+              end: endOfWeek(currentDate, { weekStartsOn: 1 }),
             }).map((date) => ({
               start: format(
                 startOfWeek(date, { weekStartsOn: 1 }),
@@ -269,6 +268,8 @@ export default function Dashboard() {
               .slice(-6); // Default to 6 months
         }
 
+        console.log("Date Range:", dateRange);
+
         const { data, error } = await supabase.rpc(
           "get_total_commission_for_dashboard"
         );
@@ -280,19 +281,31 @@ export default function Dashboard() {
 
         const totalCommissions = dateRange.map((range) => {
           const rangeData = data.filter((item) => {
-            if (selectedDateType === "weekly") {
-              return (
-                item.schedule_date >= range.start &&
-                item.schedule_date <= range.end &&
-                item.city === selectedCity
-              );
+            const itemDate = new Date(item.schedule_date);
+            const formattedItemDate = format(itemDate, "yyyy-MM-dd");
+
+            let isMatchingDate = false;
+            switch (selectedDateType) {
+              case "daily":
+                isMatchingDate = formattedItemDate === range;
+                break;
+              case "monthly":
+                isMatchingDate = format(itemDate, "yyyy-MM") === range;
+                break;
+              case "yearly":
+                isMatchingDate = format(itemDate, "yyyy") === range;
+                break;
+              case "weekly":
+                isMatchingDate =
+                  formattedItemDate >= range.start &&
+                  formattedItemDate <= range.end;
+                break;
+              default:
+                isMatchingDate = format(itemDate, "yyyy-MM") === range;
+                break;
             }
-            return (
-              (selectedDateType === "daily"
-                ? item.schedule_date === range
-                : format(new Date(item.schedule_date), "yyyy-MM") === range) &&
-              item.city === selectedCity
-            );
+
+            return isMatchingDate && item.city === selectedCity;
           });
 
           return rangeData.reduce(
@@ -301,6 +314,7 @@ export default function Dashboard() {
           );
         });
 
+        console.log("Total Commissions:", totalCommissions);
         setTotalCommission(totalCommissions);
       } catch (error) {
         console.error(
@@ -314,54 +328,79 @@ export default function Dashboard() {
     const fetchTotalBookingFee = async () => {
       try {
         let dateRange;
+        const currentDate = new Date(startDate);
 
-        switch (selectedDateType || "monthly") {
-          case "yearly":
-            dateRange = eachYearOfInterval({
-              start: new Date(startDate.getFullYear() - 5, 0, 1),
-              end: new Date(startDate.getFullYear(), 11, 31),
-            }).map((date) => format(date, "yyyy"));
-            break;
+        const getDateRange = () => {
+          switch (selectedDateType || "monthly") {
+            case "yearly":
+              return eachYearOfInterval({
+                start: new Date(currentDate.getFullYear() - 5, 0, 1),
+                end: new Date(currentDate.getFullYear(), 11, 31),
+              })
+                .map((date) => format(date, "yyyy"))
+                .slice(-6);
 
-          case "monthly":
-            dateRange = eachMonthOfInterval({
-              start: startOfMonth(
-                new Date(startDate.getFullYear(), startDate.getMonth() - 5, 1)
-              ),
-              end: endOfMonth(startDate),
-            }).map((date) => format(date, "yyyy-MM"));
-            break;
+            case "monthly":
+              return eachMonthOfInterval({
+                start: startOfMonth(
+                  new Date(
+                    currentDate.getFullYear(),
+                    currentDate.getMonth() - 5,
+                    1
+                  )
+                ),
+                end: endOfMonth(currentDate),
+              })
+                .map((date) => format(date, "yyyy-MM"))
+                .slice(-6);
 
-          case "daily":
-            dateRange = eachDayOfInterval({
-              start: startOfDay(
-                new Date(startDate.setDate(startDate.getDate() - 30))
-              ),
-              end: endOfDay(new Date()),
-            }).map((date) => format(date, "yyyy-MM-dd"));
-            break;
+            case "daily":
+              return eachDayOfInterval({
+                start: startOfDay(
+                  new Date(currentDate.getTime() - 5 * 24 * 60 * 60 * 1000)
+                ),
+                end: endOfDay(currentDate),
+              })
+                .map((date) => format(date, "yyyy-MM-dd"))
+                .slice(-6);
 
-          case "weekly":
-            dateRange = eachWeekOfInterval({
-              start: startOfWeek(
-                new Date(startDate.setDate(startDate.getDate() - 42)),
-                { weekStartsOn: 1 }
-              ),
-              end: endOfWeek(new Date(), { weekStartsOn: 1 }),
-            }).map((date) => ({
-              start: format(date, "yyyy-MM-dd"),
-              end: format(endOfWeek(date, { weekStartsOn: 1 }), "yyyy-MM-dd"),
-            }));
-            break;
+            case "weekly":
+              return eachWeekOfInterval({
+                start: startOfWeek(
+                  new Date(currentDate.getTime() - 6 * 7 * 24 * 60 * 60 * 1000),
+                  { weekStartsOn: 1 }
+                ),
+                end: endOfWeek(currentDate, { weekStartsOn: 1 }),
+              })
+                .map((date) => ({
+                  start: format(
+                    startOfWeek(date, { weekStartsOn: 1 }),
+                    "yyyy-MM-dd"
+                  ),
+                  end: format(
+                    endOfWeek(date, { weekStartsOn: 1 }),
+                    "yyyy-MM-dd"
+                  ),
+                }))
+                .slice(-6);
 
-          default:
-            dateRange = eachMonthOfInterval({
-              start: startOfMonth(
-                new Date(startDate.getFullYear(), startDate.getMonth() - 5, 1)
-              ),
-              end: endOfMonth(startDate),
-            }).map((date) => format(date, "yyyy-MM"));
-        }
+            default:
+              return eachMonthOfInterval({
+                start: startOfMonth(
+                  new Date(
+                    currentDate.getFullYear(),
+                    currentDate.getMonth() - 5,
+                    1
+                  )
+                ),
+                end: endOfMonth(currentDate),
+              })
+                .map((date) => format(date, "yyyy-MM"))
+                .slice(-6);
+          }
+        };
+
+        dateRange = getDateRange();
 
         const { data, error } = await supabase.rpc(
           "get_total_booking_fee_for_dashboard"
@@ -372,37 +411,51 @@ export default function Dashboard() {
           throw error;
         }
 
+        if (!data) {
+          console.warn("No data returned from Supabase.");
+          setTotalBookingFee(Array(dateRange.length).fill(0)); // Default to array of 0
+          return;
+        }
+
         const totalBookingFees = dateRange.map((range) => {
-          if (selectedDateType === "weekly") {
-            const weekData = data.filter(
-              (item) =>
-                item.schedule_date >= range.start &&
-                item.schedule_date <= range.end &&
-                item.city === selectedCity
-            );
-            return weekData.reduce(
-              (acc, item) => acc + parseFloat(item.total_booking_fee || 0),
-              0
-            );
-          } else {
-            const rangeData = data.filter(
-              (item) =>
-                (selectedDateType === "daily"
-                  ? item.schedule_date === range
-                  : format(new Date(item.schedule_date), "yyyy-MM") ===
-                    range) && item.city === selectedCity
-            );
-            return rangeData.reduce(
-              (acc, item) => acc + parseFloat(item.total_booking_fee || 0),
-              0
-            );
-          }
+          const rangeData = data.filter((item) => {
+            const itemDate = new Date(item.schedule_date);
+            const formattedItemDate = format(itemDate, "yyyy-MM-dd");
+
+            switch (selectedDateType) {
+              case "weekly":
+                return (
+                  item.schedule_date >= range.start &&
+                  item.schedule_date <= range.end &&
+                  item.city === selectedCity
+                );
+              case "daily":
+                return (
+                  formattedItemDate === range && item.city === selectedCity
+                );
+              case "yearly":
+                return (
+                  format(itemDate, "yyyy") === range &&
+                  item.city === selectedCity
+                );
+              default:
+                return (
+                  format(itemDate, "yyyy-MM") === range &&
+                  item.city === selectedCity
+                );
+            }
+          });
+
+          return rangeData.reduce(
+            (acc, item) => acc + parseFloat(item.total_booking_fee || 0),
+            0
+          );
         });
 
         setTotalBookingFee(totalBookingFees);
       } catch (error) {
         console.error(
-          "Error fetching total booking fees:",
+          "Error fetching total booking fee:",
           error.message || error
         );
         setTotalBookingFee(Array(6).fill(0)); // Default to array of 0 in case of error
@@ -412,54 +465,79 @@ export default function Dashboard() {
     const fetchTotalPenalties = async () => {
       try {
         let dateRange;
+        const currentDate = new Date(startDate);
 
-        switch (selectedDateType || "monthly") {
-          case "yearly":
-            dateRange = eachYearOfInterval({
-              start: new Date(startDate.getFullYear() - 5, 0, 1),
-              end: new Date(startDate.getFullYear(), 11, 31),
-            }).map((date) => format(date, "yyyy"));
-            break;
+        const getDateRange = () => {
+          switch (selectedDateType || "monthly") {
+            case "yearly":
+              return eachYearOfInterval({
+                start: new Date(currentDate.getFullYear() - 5, 0, 1),
+                end: new Date(currentDate.getFullYear(), 11, 31),
+              })
+                .map((date) => format(date, "yyyy"))
+                .slice(-6);
 
-          case "monthly":
-            dateRange = eachMonthOfInterval({
-              start: startOfMonth(
-                new Date(startDate.getFullYear(), startDate.getMonth() - 5, 1)
-              ),
-              end: endOfMonth(startDate),
-            }).map((date) => format(date, "yyyy-MM"));
-            break;
+            case "monthly":
+              return eachMonthOfInterval({
+                start: startOfMonth(
+                  new Date(
+                    currentDate.getFullYear(),
+                    currentDate.getMonth() - 5,
+                    1
+                  )
+                ),
+                end: endOfMonth(currentDate),
+              })
+                .map((date) => format(date, "yyyy-MM"))
+                .slice(-6);
 
-          case "daily":
-            dateRange = eachDayOfInterval({
-              start: startOfDay(
-                new Date(startDate.setDate(startDate.getDate() - 30))
-              ),
-              end: endOfDay(new Date()),
-            }).map((date) => format(date, "yyyy-MM-dd"));
-            break;
+            case "daily":
+              return eachDayOfInterval({
+                start: startOfDay(
+                  new Date(currentDate.getTime() - 5 * 24 * 60 * 60 * 1000)
+                ),
+                end: endOfDay(currentDate),
+              })
+                .map((date) => format(date, "yyyy-MM-dd"))
+                .slice(-6);
 
-          case "weekly":
-            dateRange = eachWeekOfInterval({
-              start: startOfWeek(
-                new Date(startDate.setDate(startDate.getDate() - 42)),
-                { weekStartsOn: 1 }
-              ),
-              end: endOfWeek(new Date(), { weekStartsOn: 1 }),
-            }).map((date) => ({
-              start: format(date, "yyyy-MM-dd"),
-              end: format(endOfWeek(date, { weekStartsOn: 1 }), "yyyy-MM-dd"),
-            }));
-            break;
+            case "weekly":
+              return eachWeekOfInterval({
+                start: startOfWeek(
+                  new Date(currentDate.getTime() - 6 * 7 * 24 * 60 * 60 * 1000),
+                  { weekStartsOn: 1 }
+                ),
+                end: endOfWeek(currentDate, { weekStartsOn: 1 }),
+              })
+                .map((date) => ({
+                  start: format(
+                    startOfWeek(date, { weekStartsOn: 1 }),
+                    "yyyy-MM-dd"
+                  ),
+                  end: format(
+                    endOfWeek(date, { weekStartsOn: 1 }),
+                    "yyyy-MM-dd"
+                  ),
+                }))
+                .slice(-6);
 
-          default:
-            dateRange = eachMonthOfInterval({
-              start: startOfMonth(
-                new Date(startDate.getFullYear(), startDate.getMonth() - 5, 1)
-              ),
-              end: endOfMonth(startDate),
-            }).map((date) => format(date, "yyyy-MM"));
-        }
+            default:
+              return eachMonthOfInterval({
+                start: startOfMonth(
+                  new Date(
+                    currentDate.getFullYear(),
+                    currentDate.getMonth() - 5,
+                    1
+                  )
+                ),
+                end: endOfMonth(currentDate),
+              })
+                .map((date) => format(date, "yyyy-MM"))
+                .slice(-6);
+          }
+        };
+
+        dateRange = getDateRange();
 
         const { data, error } = await supabase.rpc(
           "get_total_penalties_for_dashboard"
@@ -470,31 +548,45 @@ export default function Dashboard() {
           throw error;
         }
 
+        if (!data) {
+          console.warn("No data returned from Supabase.");
+          setTotalPenalties(Array(dateRange.length).fill(0)); // Default to array of 0
+          return;
+        }
+
         const totalPenalties = dateRange.map((range) => {
-          if (selectedDateType === "weekly") {
-            const weekData = data.filter(
-              (item) =>
-                item.schedule_date >= range.start &&
-                item.schedule_date <= range.end &&
-                item.city === selectedCity
-            );
-            return weekData.reduce(
-              (acc, item) => acc + parseFloat(item.total_penalties || 0),
-              0
-            );
-          } else {
-            const rangeData = data.filter(
-              (item) =>
-                (selectedDateType === "daily"
-                  ? item.schedule_date === range
-                  : format(new Date(item.schedule_date), "yyyy-MM") ===
-                    range) && item.city === selectedCity
-            );
-            return rangeData.reduce(
-              (acc, item) => acc + parseFloat(item.total_penalties || 0),
-              0
-            );
-          }
+          const rangeData = data.filter((item) => {
+            const itemDate = new Date(item.schedule_date);
+            const formattedItemDate = format(itemDate, "yyyy-MM-dd");
+
+            switch (selectedDateType) {
+              case "weekly":
+                return (
+                  item.schedule_date >= range.start &&
+                  item.schedule_date <= range.end &&
+                  item.city === selectedCity
+                );
+              case "daily":
+                return (
+                  formattedItemDate === range && item.city === selectedCity
+                );
+              case "yearly":
+                return (
+                  format(itemDate, "yyyy") === range &&
+                  item.city === selectedCity
+                );
+              default:
+                return (
+                  format(itemDate, "yyyy-MM") === range &&
+                  item.city === selectedCity
+                );
+            }
+          });
+
+          return rangeData.reduce(
+            (acc, item) => acc + parseFloat(item.total_penalties || 0),
+            0
+          );
         });
 
         setTotalPenalties(totalPenalties);
@@ -510,28 +602,33 @@ export default function Dashboard() {
     const fetchTotalReceivables = async () => {
       try {
         let dateRange;
+        const currentDate = new Date(startDate); // Create a new Date object to avoid mutability
 
         switch (selectedDateType || "monthly") {
           case "yearly":
             dateRange = eachYearOfInterval({
-              start: new Date(startDate.getFullYear() - 5, 0, 1),
-              end: new Date(startDate.getFullYear(), 11, 31),
+              start: new Date(currentDate.getFullYear() - 5, 0, 1),
+              end: new Date(currentDate.getFullYear(), 11, 31),
             }).map((date) => format(date, "yyyy"));
             break;
 
           case "monthly":
             dateRange = eachMonthOfInterval({
               start: startOfMonth(
-                new Date(startDate.getFullYear(), startDate.getMonth() - 5, 1)
+                new Date(
+                  currentDate.getFullYear(),
+                  currentDate.getMonth() - 5,
+                  1
+                )
               ),
-              end: endOfMonth(startDate),
+              end: endOfMonth(currentDate),
             }).map((date) => format(date, "yyyy-MM"));
             break;
 
           case "daily":
             dateRange = eachDayOfInterval({
               start: startOfDay(
-                new Date(startDate.setDate(startDate.getDate() - 30))
+                new Date(currentDate.getTime() - 30 * 24 * 60 * 60 * 1000) // Calculate new date without modifying original
               ),
               end: endOfDay(new Date()),
             }).map((date) => format(date, "yyyy-MM-dd"));
@@ -540,7 +637,7 @@ export default function Dashboard() {
           case "weekly":
             dateRange = eachWeekOfInterval({
               start: startOfWeek(
-                new Date(startDate.setDate(startDate.getDate() - 42)),
+                new Date(currentDate.getTime() - 42 * 24 * 60 * 60 * 1000), // Calculate new date without modifying original
                 { weekStartsOn: 1 }
               ),
               end: endOfWeek(new Date(), { weekStartsOn: 1 }),
@@ -553,11 +650,18 @@ export default function Dashboard() {
           default:
             dateRange = eachMonthOfInterval({
               start: startOfMonth(
-                new Date(startDate.getFullYear(), startDate.getMonth() - 5, 1)
+                new Date(
+                  currentDate.getFullYear(),
+                  currentDate.getMonth() - 5,
+                  1
+                )
               ),
-              end: endOfMonth(startDate),
+              end: endOfMonth(currentDate),
             }).map((date) => format(date, "yyyy-MM"));
         }
+
+        // Debug Logging
+        console.log("Date Range:", dateRange);
 
         const { data, error } = await supabase.rpc(
           "get_total_receivables_for_dashboard"
@@ -570,20 +674,33 @@ export default function Dashboard() {
 
         const totalReceivables = dateRange.reduce((acc, range) => {
           const filteredData = data.filter((item) => {
-            if (selectedDateType === "weekly") {
-              return (
-                item.schedule_date >= range.start &&
-                item.schedule_date <= range.end &&
-                item.city === selectedCity
-              );
+            const itemDate = new Date(item.schedule_date);
+
+            switch (selectedDateType) {
+              case "weekly":
+                return (
+                  item.schedule_date >= range.start &&
+                  item.schedule_date <= range.end &&
+                  item.city === selectedCity
+                );
+              case "daily":
+                return (
+                  format(itemDate, "yyyy-MM-dd") === range &&
+                  item.city === selectedCity
+                );
+              case "yearly":
+                return (
+                  format(itemDate, "yyyy") === range &&
+                  item.city === selectedCity
+                );
+              default:
+                return (
+                  format(itemDate, "yyyy-MM") === range &&
+                  item.city === selectedCity
+                );
             }
-            return (
-              (selectedDateType === "daily"
-                ? item.schedule_date === range
-                : format(new Date(item.schedule_date), "yyyy-MM") === range) &&
-              item.city === selectedCity
-            );
           });
+
           return (
             acc +
             filteredData.reduce(
@@ -608,30 +725,43 @@ export default function Dashboard() {
         const dateType = selectedDateType || "monthly";
 
         let formattedStartDate, formattedEndDate;
+        const currentDate = new Date(startDate); // Create a new Date object to avoid mutability
 
         switch (dateType) {
           case "yearly":
-            formattedStartDate = format(startOfYear(startDate), "yyyy-01-01");
-            formattedEndDate = format(endOfYear(startDate), "yyyy-12-31");
+            formattedStartDate = format(startOfYear(currentDate), "yyyy-01-01");
+            formattedEndDate = format(endOfYear(currentDate), "yyyy-12-31");
             break;
           case "monthly":
-            formattedStartDate = format(startOfMonth(startDate), "yyyy-MM-dd");
-            formattedEndDate = format(endOfMonth(startDate), "yyyy-MM-dd");
+            formattedStartDate = format(
+              startOfMonth(currentDate),
+              "yyyy-MM-dd"
+            );
+            formattedEndDate = format(endOfMonth(currentDate), "yyyy-MM-dd");
             break;
           case "daily":
-            formattedStartDate = format(startDate, "yyyy-MM-dd");
-            formattedEndDate = format(startDate, "yyyy-MM-dd");
+            formattedStartDate = format(currentDate, "yyyy-MM-dd");
+            formattedEndDate = format(currentDate, "yyyy-MM-dd");
             break;
           case "weekly":
-            const startOfWeekDate = startOfWeek(startDate, { weekStartsOn: 1 });
-            const endOfWeekDate = endOfWeek(startDate, { weekStartsOn: 1 });
+            const startOfWeekDate = startOfWeek(currentDate, {
+              weekStartsOn: 1,
+            });
+            const endOfWeekDate = endOfWeek(currentDate, { weekStartsOn: 1 });
             formattedStartDate = format(startOfWeekDate, "yyyy-MM-dd");
             formattedEndDate = format(endOfWeekDate, "yyyy-MM-dd");
             break;
           default:
-            formattedStartDate = format(startOfMonth(startDate), "yyyy-MM-dd");
-            formattedEndDate = format(endOfMonth(startDate), "yyyy-MM-dd");
+            formattedStartDate = format(
+              startOfMonth(currentDate),
+              "yyyy-MM-dd"
+            );
+            formattedEndDate = format(endOfMonth(currentDate), "yyyy-MM-dd");
         }
+
+        // Debug Logging
+        console.log("Formatted Start Date:", formattedStartDate);
+        console.log("Formatted End Date:", formattedEndDate);
 
         const { data, error } = await supabase.rpc(
           "get_total_recent_payments_for_dashboard"
@@ -639,13 +769,38 @@ export default function Dashboard() {
 
         if (error) throw error;
 
-        // Assuming the data format is correct, proceed to filter and sort
-        const filteredData = data.filter(
-          (item) =>
-            item.city === selectedCity &&
-            format(parseISO(item.schedule_date), "yyyy-MM") ===
-              format(startDate, "yyyy-MM")
-        );
+        const filteredData = data.filter((item) => {
+          const itemDate = new Date(item.schedule_date);
+
+          switch (dateType) {
+            case "yearly":
+              return (
+                item.city === selectedCity &&
+                format(itemDate, "yyyy") === format(currentDate, "yyyy")
+              );
+            case "monthly":
+              return (
+                item.city === selectedCity &&
+                format(itemDate, "yyyy-MM") === format(currentDate, "yyyy-MM")
+              );
+            case "daily":
+              return (
+                item.city === selectedCity &&
+                format(itemDate, "yyyy-MM-dd") === formattedStartDate
+              );
+            case "weekly":
+              return (
+                item.city === selectedCity &&
+                itemDate >= parseISO(formattedStartDate) &&
+                itemDate <= parseISO(formattedEndDate)
+              );
+            default:
+              return (
+                item.city === selectedCity &&
+                format(itemDate, "yyyy-MM") === format(currentDate, "yyyy-MM")
+              );
+          }
+        });
 
         const sortedPayments = filteredData.sort(
           (a, b) => new Date(b.schedule_date) - new Date(a.schedule_date)
@@ -700,7 +855,7 @@ export default function Dashboard() {
     }, 8000);
 
     return () => clearInterval(interval);
-  }, [router, selectedCity, startDate]);
+  }, [router, selectedCity, startDate, selectedDateType]);
 
   const paidPercentage =
     (totalPayments / (totalReceivables + totalPayments)) * 100 || 0;
@@ -731,14 +886,14 @@ export default function Dashboard() {
 
             <div className="flex relative">
               <button
-                className="items-center flex border rounded-xl px-3 py-[6px] mr-4 hover:bg-gray-100"
+                className="items-center flex border rounded-xl px-3 py-[6px] mr-4 hover:bg-gray-100 border-gray-300"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
                 <FaMapMarkerAlt />
                 <p className="px-4 text-xs font-semibold">{selectedCity}</p>
               </button>
               {dropdownOpen && (
-                <div className="absolute top-full left-0 mt-2 text-sm text-center w-[145px] border bg-white shadow-lg z-10 rounded-xl">
+                <div className="absolute top-9 left-0 mt-2 text-sm text-center w-[145px] border bg-white shadow-lg z-10 rounded-xl">
                   <ul className="list-none m-0 p-0">
                     {cities.map((city, index) => (
                       <li
@@ -756,7 +911,7 @@ export default function Dashboard() {
                 </div>
               )}
 
-              <button className="items-center flex border rounded-xl px-3 py-[6px] mr-4 hover:bg-gray-100">
+              <button className="items-center flex border rounded-xl px-3 py-[6px] mr-4 hover:bg-gray-100 border-gray-300">
                 <FaBuilding />
                 <div>
                   <p className="px-4 text-xs font-semibold">All Junkshops</p>
@@ -772,7 +927,8 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="px-4 text-xs font-semibold">
-                      {selectedDateType}
+                      {selectedDateType.charAt(0).toUpperCase() +
+                        selectedDateType.slice(1).toLowerCase()}
                     </p>
                   </div>
                   <div className="pl-2">
@@ -780,13 +936,15 @@ export default function Dashboard() {
                   </div>
                 </button>
                 {isOpen && (
-                  <div className="absolute right-38 top-9 w-40 bg-white border border-gray-300 rounded-lg shadow-lg z-10]">
+                  <div className="absolute right-38 top-11 w-40 bg-white border border-gray-300 rounded-lg shadow-lg z-10">
                     <ul className="text-sm text-center">
-                      {["yearly", "monthly", "weekly", "daily"].map(
+                      {["Yearly", "Monthly", "Weekly", "Daily"].map(
                         (dateType) => (
                           <li
-                            key={dateType}
-                            onClick={() => handleDateTypeSelect(dateType)}
+                            key={dateType.toLowerCase()}
+                            onClick={() =>
+                              handleDateTypeSelect(dateType.toLowerCase())
+                            }
                             className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
                           >
                             {dateType}
@@ -805,10 +963,13 @@ export default function Dashboard() {
               >
                 <div className="">
                   <DatePicker
-                    selected={startDate}
-                    onChange={(date) => setStartDate(date)}
-                    dateFormat="MMMM yyyy"
-                    showMonthYearPicker
+                    selected={
+                      startDate instanceof Date && !isNaN(startDate.getTime())
+                        ? startDate
+                        : null
+                    }
+                    onChange={handleDateChange}
+                    {...datePickerProps}
                     className="px-2 text-xs font-semibold text-center w-[120px] items-center mb-1"
                     popperPlacement="bottom-end"
                   />
@@ -858,16 +1019,26 @@ export default function Dashboard() {
               {/* Column 1 */}
               <div className="mr-5 w-full">
                 {/* Start Row 1 */}
-                <CommissionCard totalCommission={totalCommission} />
+                <CommissionCard
+                  totalCommission={totalCommission}
+                  selectedDateType={selectedDateType}
+                />
+
                 {/* End Row 1 */}
 
                 {/* Start Row 2 */}
-                <BookingFeeCard totalBookingFee={totalBookingFee} />
+                <BookingFeeCard
+                  totalBookingFee={totalBookingFee}
+                  selectedDateType={selectedDateType}
+                />
 
                 {/* End Row 2 */}
 
                 {/* Start Row 3 */}
-                <PenaltiesCard totalPenalties={totalPenalties} />
+                <PenaltiesCard
+                  totalPenalties={totalPenalties}
+                  selectedDateType={selectedDateType}
+                />
                 {/* End Row 3 */}
               </div>
 
