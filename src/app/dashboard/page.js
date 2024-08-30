@@ -4,10 +4,30 @@ import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
 import AppBar from "/src/app/components/AppBar";
-import { FaCalendarAlt, FaMapMarkerAlt, FaBuilding } from "react-icons/fa";
+import {
+  FaCalendarAlt,
+  FaMapMarkerAlt,
+  FaBuilding,
+  FaChevronDown,
+} from "react-icons/fa";
 import PieChart from "../components/PieChart";
 import DatePicker from "react-datepicker";
-import { format, parseISO } from "date-fns"; // Import the format function
+import {
+  parseISO,
+  format,
+  startOfYear,
+  endOfYear,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  startOfDay,
+  endOfDay,
+  eachDayOfInterval,
+  eachMonthOfInterval,
+  eachWeekOfInterval,
+  eachYearOfInterval,
+} from "date-fns";
 import "react-datepicker/dist/react-datepicker.css";
 import CommissionCard from "./components/CommissionCard";
 import BookingFeeCard from "./components/BookingFeeCard";
@@ -29,6 +49,17 @@ export default function Dashboard() {
   const [totalReceivables, setTotalReceivables] = useState(0);
   const [recentPayments, setRecentPayments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDateType, setSelectedDateType] = useState("monthly");
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleDropdownToggle = () => {
+    setIsOpen(!isOpen);
+  };
+
+  const handleDateTypeSelect = (dateType) => {
+    setSelectedDateType(dateType);
+    setIsOpen(false);
+  };
 
   useEffect(() => {
     const fetchCities = async () => {
@@ -65,54 +96,206 @@ export default function Dashboard() {
 
     const fetchTotalPayments = async () => {
       try {
-        const formattedMonth = format(startDate, "yyyy-MM");
+        let dateRange;
+
+        // Ensure startDate is a valid Date object
+        const validStartDate =
+          startDate instanceof Date && !isNaN(startDate.getTime())
+            ? startDate
+            : new Date();
+
+        switch (selectedDateType || "monthly") {
+          case "yearly":
+            dateRange = eachYearOfInterval({
+              start: new Date(validStartDate.getFullYear() - 5, 0, 1),
+              end: new Date(validStartDate.getFullYear(), 11, 31),
+            }).map((date) => format(date, "yyyy"));
+            break;
+
+          case "monthly":
+            dateRange = eachMonthOfInterval({
+              start: startOfMonth(
+                new Date(
+                  validStartDate.getFullYear(),
+                  validStartDate.getMonth() - 5,
+                  1
+                )
+              ),
+              end: endOfMonth(validStartDate),
+            }).map((date) => format(date, "yyyy-MM"));
+            break;
+
+          case "daily":
+            dateRange = eachDayOfInterval({
+              start: startOfDay(
+                new Date(validStartDate.setDate(validStartDate.getDate() - 30))
+              ),
+              end: endOfDay(new Date()),
+            }).map((date) => format(date, "yyyy-MM-dd"));
+            break;
+
+          case "weekly":
+            dateRange = eachWeekOfInterval({
+              start: startOfWeek(
+                new Date(validStartDate.setDate(validStartDate.getDate() - 42)),
+                { weekStartsOn: 1 }
+              ),
+              end: endOfWeek(new Date(), { weekStartsOn: 1 }),
+            }).map((date) => ({
+              start: format(date, "yyyy-MM-dd"),
+              end: format(endOfWeek(date, { weekStartsOn: 1 }), "yyyy-MM-dd"),
+            }));
+            break;
+
+          default:
+            dateRange = eachMonthOfInterval({
+              start: startOfMonth(
+                new Date(
+                  validStartDate.getFullYear(),
+                  validStartDate.getMonth() - 5,
+                  1
+                )
+              ),
+              end: endOfMonth(validStartDate),
+            }).map((date) => format(date, "yyyy-MM"));
+        }
+
         const { data, error } = await supabase.rpc("get_total_payments");
-        if (error) throw error;
 
-        // Filter the data based on selected city and month
-        const filteredData = data.filter(
-          (item) => item.city === selectedCity && item.month === formattedMonth
-        );
+        if (error) {
+          console.error("Error fetching data:", error.message || error);
+          throw error;
+        }
 
-        // Calculate the total payments for the selected city and month
-        const total = filteredData.reduce(
-          (acc, item) => acc + parseFloat(item.total_payment || 0),
-          0
-        );
-        setTotalPayments(total);
+        const totalPayments = data.reduce((acc, item) => {
+          const itemDate = new Date(item.schedule_date);
+
+          // Convert itemDate to format for comparison
+          const formattedItemDate = format(itemDate, "yyyy-MM-dd");
+          const formattedStartDate = format(validStartDate, "yyyy-MM-dd");
+
+          const isMatchingDate =
+            selectedDateType === "daily"
+              ? formattedItemDate === formattedStartDate
+              : selectedDateType === "monthly"
+              ? format(itemDate, "yyyy-MM") ===
+                format(validStartDate, "yyyy-MM")
+              : selectedDateType === "yearly"
+              ? format(itemDate, "yyyy") === format(validStartDate, "yyyy")
+              : false;
+
+          return isMatchingDate && item.city === selectedCity
+            ? acc + parseFloat(item.total_payment || 0)
+            : acc;
+        }, 0);
+
+        setTotalPayments(totalPayments);
       } catch (error) {
-        console.error("Error fetching total payments:", error);
+        console.error("Error fetching total payments:", error.message || error);
         setTotalPayments(0); // Default to 0 in case of error
       }
     };
 
     const fetchTotalCommission = async () => {
       try {
-        const formattedMonth = format(startDate, "yyyy-MM");
-        const months = [];
-        const currentMonth = new Date(startDate);
+        let dateRange;
+        const currentDate = new Date(startDate);
 
-        // Generate an array of months from 5 months ago to the current month
-        for (let i = 5; i >= 0; i--) {
-          const month = new Date(currentMonth);
-          month.setMonth(month.getMonth() - i);
-          months.push(format(month, "yyyy-MM"));
+        switch (selectedDateType || "monthly") {
+          case "yearly":
+            dateRange = eachYearOfInterval({
+              start: new Date(currentDate.getFullYear() - 5, 0, 1),
+              end: new Date(currentDate.getFullYear(), 11, 31),
+            })
+              .map((date) => format(date, "yyyy"))
+              .slice(-6); // Limit to 6 years
+            break;
+
+          case "monthly":
+            dateRange = eachMonthOfInterval({
+              start: startOfMonth(
+                new Date(
+                  currentDate.getFullYear(),
+                  currentDate.getMonth() - 5,
+                  1
+                )
+              ),
+              end: endOfMonth(currentDate),
+            })
+              .map((date) => format(date, "yyyy-MM"))
+              .slice(-6); // Limit to 6 months
+            break;
+
+          case "daily":
+            dateRange = eachDayOfInterval({
+              start: startOfDay(
+                new Date(currentDate.setDate(currentDate.getDate() - 5))
+              ),
+              end: endOfDay(new Date()),
+            })
+              .map((date) => format(date, "yyyy-MM-dd"))
+              .slice(-6); // Limit to 6 days
+            break;
+
+          case "weekly":
+            const weeks = eachWeekOfInterval({
+              start: startOfWeek(
+                new Date(currentDate.setDate(currentDate.getDate() - 42)),
+                { weekStartsOn: 1 }
+              ),
+              end: endOfWeek(new Date(), { weekStartsOn: 1 }),
+            }).map((date) => ({
+              start: format(
+                startOfWeek(date, { weekStartsOn: 1 }),
+                "yyyy-MM-dd"
+              ),
+              end: format(endOfWeek(date, { weekStartsOn: 1 }), "yyyy-MM-dd"),
+            }));
+            dateRange = weeks.slice(-6); // Limit to 6 weeks
+            break;
+
+          default:
+            dateRange = eachMonthOfInterval({
+              start: startOfMonth(
+                new Date(
+                  currentDate.getFullYear(),
+                  currentDate.getMonth() - 5,
+                  1
+                )
+              ),
+              end: endOfMonth(currentDate),
+            })
+              .map((date) => format(date, "yyyy-MM"))
+              .slice(-6); // Default to 6 months
         }
 
         const { data, error } = await supabase.rpc(
           "get_total_commission_for_dashboard"
         );
-        if (error) throw error;
 
-        // Filter the data based on the months array
-        const filteredData = data.filter(
-          (item) => months.includes(item.month) && item.city === selectedCity
-        );
+        if (error) {
+          console.error("Error fetching data:", error.message || error);
+          throw error;
+        }
 
-        // Calculate the total commission for each month
-        const totalCommissions = months.map((month) => {
-          const monthData = filteredData.filter((item) => item.month === month);
-          return monthData.reduce(
+        const totalCommissions = dateRange.map((range) => {
+          const rangeData = data.filter((item) => {
+            if (selectedDateType === "weekly") {
+              return (
+                item.schedule_date >= range.start &&
+                item.schedule_date <= range.end &&
+                item.city === selectedCity
+              );
+            }
+            return (
+              (selectedDateType === "daily"
+                ? item.schedule_date === range
+                : format(new Date(item.schedule_date), "yyyy-MM") === range) &&
+              item.city === selectedCity
+            );
+          });
+
+          return rangeData.reduce(
             (acc, item) => acc + parseFloat(item.total_commission || 0),
             0
           );
@@ -120,129 +303,354 @@ export default function Dashboard() {
 
         setTotalCommission(totalCommissions);
       } catch (error) {
-        console.error("Error fetching total commission:", error);
+        console.error(
+          "Error fetching total commission:",
+          error.message || error
+        );
         setTotalCommission(Array(6).fill(0)); // Default to array of 0 in case of error
       }
     };
 
     const fetchTotalBookingFee = async () => {
       try {
-        const formattedMonth = format(startDate, "yyyy-MM");
-        const months = [];
-        const currentMonth = new Date(startDate);
+        let dateRange;
 
-        // Generate an array of months from 5 months ago to the current month
-        for (let i = 5; i >= 0; i--) {
-          const month = new Date(currentMonth);
-          month.setMonth(month.getMonth() - i);
-          months.push(format(month, "yyyy-MM"));
+        switch (selectedDateType || "monthly") {
+          case "yearly":
+            dateRange = eachYearOfInterval({
+              start: new Date(startDate.getFullYear() - 5, 0, 1),
+              end: new Date(startDate.getFullYear(), 11, 31),
+            }).map((date) => format(date, "yyyy"));
+            break;
+
+          case "monthly":
+            dateRange = eachMonthOfInterval({
+              start: startOfMonth(
+                new Date(startDate.getFullYear(), startDate.getMonth() - 5, 1)
+              ),
+              end: endOfMonth(startDate),
+            }).map((date) => format(date, "yyyy-MM"));
+            break;
+
+          case "daily":
+            dateRange = eachDayOfInterval({
+              start: startOfDay(
+                new Date(startDate.setDate(startDate.getDate() - 30))
+              ),
+              end: endOfDay(new Date()),
+            }).map((date) => format(date, "yyyy-MM-dd"));
+            break;
+
+          case "weekly":
+            dateRange = eachWeekOfInterval({
+              start: startOfWeek(
+                new Date(startDate.setDate(startDate.getDate() - 42)),
+                { weekStartsOn: 1 }
+              ),
+              end: endOfWeek(new Date(), { weekStartsOn: 1 }),
+            }).map((date) => ({
+              start: format(date, "yyyy-MM-dd"),
+              end: format(endOfWeek(date, { weekStartsOn: 1 }), "yyyy-MM-dd"),
+            }));
+            break;
+
+          default:
+            dateRange = eachMonthOfInterval({
+              start: startOfMonth(
+                new Date(startDate.getFullYear(), startDate.getMonth() - 5, 1)
+              ),
+              end: endOfMonth(startDate),
+            }).map((date) => format(date, "yyyy-MM"));
         }
 
         const { data, error } = await supabase.rpc(
           "get_total_booking_fee_for_dashboard"
         );
-        if (error) throw error;
 
-        // Filter the data based on the months array
-        const filteredData = data.filter(
-          (item) => months.includes(item.month) && item.city === selectedCity
-        );
+        if (error) {
+          console.error("Error fetching data:", error.message || error);
+          throw error;
+        }
 
-        // Calculate the total booking fee for each month
-        const totalBookingFees = months.map((month) => {
-          const monthData = filteredData.filter((item) => item.month === month);
-          return monthData.reduce(
-            (acc, item) => acc + parseFloat(item.total_booking_fee || 0),
-            0
-          );
+        const totalBookingFees = dateRange.map((range) => {
+          if (selectedDateType === "weekly") {
+            const weekData = data.filter(
+              (item) =>
+                item.schedule_date >= range.start &&
+                item.schedule_date <= range.end &&
+                item.city === selectedCity
+            );
+            return weekData.reduce(
+              (acc, item) => acc + parseFloat(item.total_booking_fee || 0),
+              0
+            );
+          } else {
+            const rangeData = data.filter(
+              (item) =>
+                (selectedDateType === "daily"
+                  ? item.schedule_date === range
+                  : format(new Date(item.schedule_date), "yyyy-MM") ===
+                    range) && item.city === selectedCity
+            );
+            return rangeData.reduce(
+              (acc, item) => acc + parseFloat(item.total_booking_fee || 0),
+              0
+            );
+          }
         });
 
         setTotalBookingFee(totalBookingFees);
       } catch (error) {
-        console.error("Error fetching total booking fees:", error);
+        console.error(
+          "Error fetching total booking fees:",
+          error.message || error
+        );
         setTotalBookingFee(Array(6).fill(0)); // Default to array of 0 in case of error
       }
     };
 
     const fetchTotalPenalties = async () => {
       try {
-        const formattedMonth = format(startDate, "yyyy-MM");
-        const months = [];
-        const currentMonth = new Date(startDate);
+        let dateRange;
 
-        // Generate an array of months from 5 months ago to the current month
-        for (let i = 5; i >= 0; i--) {
-          const month = new Date(currentMonth);
-          month.setMonth(month.getMonth() - i);
-          months.push(format(month, "yyyy-MM"));
+        switch (selectedDateType || "monthly") {
+          case "yearly":
+            dateRange = eachYearOfInterval({
+              start: new Date(startDate.getFullYear() - 5, 0, 1),
+              end: new Date(startDate.getFullYear(), 11, 31),
+            }).map((date) => format(date, "yyyy"));
+            break;
+
+          case "monthly":
+            dateRange = eachMonthOfInterval({
+              start: startOfMonth(
+                new Date(startDate.getFullYear(), startDate.getMonth() - 5, 1)
+              ),
+              end: endOfMonth(startDate),
+            }).map((date) => format(date, "yyyy-MM"));
+            break;
+
+          case "daily":
+            dateRange = eachDayOfInterval({
+              start: startOfDay(
+                new Date(startDate.setDate(startDate.getDate() - 30))
+              ),
+              end: endOfDay(new Date()),
+            }).map((date) => format(date, "yyyy-MM-dd"));
+            break;
+
+          case "weekly":
+            dateRange = eachWeekOfInterval({
+              start: startOfWeek(
+                new Date(startDate.setDate(startDate.getDate() - 42)),
+                { weekStartsOn: 1 }
+              ),
+              end: endOfWeek(new Date(), { weekStartsOn: 1 }),
+            }).map((date) => ({
+              start: format(date, "yyyy-MM-dd"),
+              end: format(endOfWeek(date, { weekStartsOn: 1 }), "yyyy-MM-dd"),
+            }));
+            break;
+
+          default:
+            dateRange = eachMonthOfInterval({
+              start: startOfMonth(
+                new Date(startDate.getFullYear(), startDate.getMonth() - 5, 1)
+              ),
+              end: endOfMonth(startDate),
+            }).map((date) => format(date, "yyyy-MM"));
         }
 
         const { data, error } = await supabase.rpc(
           "get_total_penalties_for_dashboard"
         );
-        if (error) throw error;
 
-        // Filter the data based on the months array and selected city
-        const filteredData = data.filter(
-          (item) => months.includes(item.month) && item.city === selectedCity
-        );
+        if (error) {
+          console.error("Error fetching data:", error.message || error);
+          throw error;
+        }
 
-        // Calculate the total penalties for each month
-        const totalPenalties = months.map((month) => {
-          const monthData = filteredData.filter((item) => item.month === month);
-          return monthData.reduce(
-            (acc, item) => acc + parseFloat(item.total_penalties || 0),
-            0
-          );
+        const totalPenalties = dateRange.map((range) => {
+          if (selectedDateType === "weekly") {
+            const weekData = data.filter(
+              (item) =>
+                item.schedule_date >= range.start &&
+                item.schedule_date <= range.end &&
+                item.city === selectedCity
+            );
+            return weekData.reduce(
+              (acc, item) => acc + parseFloat(item.total_penalties || 0),
+              0
+            );
+          } else {
+            const rangeData = data.filter(
+              (item) =>
+                (selectedDateType === "daily"
+                  ? item.schedule_date === range
+                  : format(new Date(item.schedule_date), "yyyy-MM") ===
+                    range) && item.city === selectedCity
+            );
+            return rangeData.reduce(
+              (acc, item) => acc + parseFloat(item.total_penalties || 0),
+              0
+            );
+          }
         });
 
         setTotalPenalties(totalPenalties);
       } catch (error) {
-        console.error("Error fetching total penalties:", error);
+        console.error(
+          "Error fetching total penalties:",
+          error.message || error
+        );
         setTotalPenalties(Array(6).fill(0)); // Default to array of 0 in case of error
       }
     };
 
     const fetchTotalReceivables = async () => {
       try {
-        const formattedMonth = format(startDate, "yyyy-MM");
+        let dateRange;
+
+        switch (selectedDateType || "monthly") {
+          case "yearly":
+            dateRange = eachYearOfInterval({
+              start: new Date(startDate.getFullYear() - 5, 0, 1),
+              end: new Date(startDate.getFullYear(), 11, 31),
+            }).map((date) => format(date, "yyyy"));
+            break;
+
+          case "monthly":
+            dateRange = eachMonthOfInterval({
+              start: startOfMonth(
+                new Date(startDate.getFullYear(), startDate.getMonth() - 5, 1)
+              ),
+              end: endOfMonth(startDate),
+            }).map((date) => format(date, "yyyy-MM"));
+            break;
+
+          case "daily":
+            dateRange = eachDayOfInterval({
+              start: startOfDay(
+                new Date(startDate.setDate(startDate.getDate() - 30))
+              ),
+              end: endOfDay(new Date()),
+            }).map((date) => format(date, "yyyy-MM-dd"));
+            break;
+
+          case "weekly":
+            dateRange = eachWeekOfInterval({
+              start: startOfWeek(
+                new Date(startDate.setDate(startDate.getDate() - 42)),
+                { weekStartsOn: 1 }
+              ),
+              end: endOfWeek(new Date(), { weekStartsOn: 1 }),
+            }).map((date) => ({
+              start: format(date, "yyyy-MM-dd"),
+              end: format(endOfWeek(date, { weekStartsOn: 1 }), "yyyy-MM-dd"),
+            }));
+            break;
+
+          default:
+            dateRange = eachMonthOfInterval({
+              start: startOfMonth(
+                new Date(startDate.getFullYear(), startDate.getMonth() - 5, 1)
+              ),
+              end: endOfMonth(startDate),
+            }).map((date) => format(date, "yyyy-MM"));
+        }
+
         const { data, error } = await supabase.rpc(
           "get_total_receivables_for_dashboard"
         );
-        if (error) throw error;
 
-        // Filter the data based on selected city and month
-        const filteredData = data.filter(
-          (item) => item.city === selectedCity && item.month === formattedMonth
-        );
+        if (error) {
+          console.error("Error fetching data:", error.message || error);
+          throw error;
+        }
 
-        // Calculate the total receivables for the selected city and month
-        const total = filteredData.reduce(
-          (acc, item) => acc + parseFloat(item.total_receivables || 0),
-          0
-        );
-        setTotalReceivables(total);
+        const totalReceivables = dateRange.reduce((acc, range) => {
+          const filteredData = data.filter((item) => {
+            if (selectedDateType === "weekly") {
+              return (
+                item.schedule_date >= range.start &&
+                item.schedule_date <= range.end &&
+                item.city === selectedCity
+              );
+            }
+            return (
+              (selectedDateType === "daily"
+                ? item.schedule_date === range
+                : format(new Date(item.schedule_date), "yyyy-MM") === range) &&
+              item.city === selectedCity
+            );
+          });
+          return (
+            acc +
+            filteredData.reduce(
+              (sum, item) => sum + parseFloat(item.total_receivables || 0),
+              0
+            )
+          );
+        }, 0);
+
+        setTotalReceivables(totalReceivables);
       } catch (error) {
-        console.error("Error fetching total receivables:", error);
+        console.error(
+          "Error fetching total receivables:",
+          error.message || error
+        );
         setTotalReceivables(0); // Default to 0 in case of error
       }
     };
 
     const fetchTotalRecentPayments = async () => {
       try {
-        const formattedMonth = format(startDate, "yyyy-MM");
+        const dateType = selectedDateType || "monthly";
+
+        let formattedStartDate, formattedEndDate;
+
+        switch (dateType) {
+          case "yearly":
+            formattedStartDate = format(startOfYear(startDate), "yyyy-01-01");
+            formattedEndDate = format(endOfYear(startDate), "yyyy-12-31");
+            break;
+          case "monthly":
+            formattedStartDate = format(startOfMonth(startDate), "yyyy-MM-dd");
+            formattedEndDate = format(endOfMonth(startDate), "yyyy-MM-dd");
+            break;
+          case "daily":
+            formattedStartDate = format(startDate, "yyyy-MM-dd");
+            formattedEndDate = format(startDate, "yyyy-MM-dd");
+            break;
+          case "weekly":
+            const startOfWeekDate = startOfWeek(startDate, { weekStartsOn: 1 });
+            const endOfWeekDate = endOfWeek(startDate, { weekStartsOn: 1 });
+            formattedStartDate = format(startOfWeekDate, "yyyy-MM-dd");
+            formattedEndDate = format(endOfWeekDate, "yyyy-MM-dd");
+            break;
+          default:
+            formattedStartDate = format(startOfMonth(startDate), "yyyy-MM-dd");
+            formattedEndDate = format(endOfMonth(startDate), "yyyy-MM-dd");
+        }
+
         const { data, error } = await supabase.rpc(
           "get_total_recent_payments_for_dashboard"
         );
+
         if (error) throw error;
 
-        // Filter, sort, and format the data
+        // Assuming the data format is correct, proceed to filter and sort
         const filteredData = data.filter(
-          (item) => item.city === selectedCity && item.month === formattedMonth
+          (item) =>
+            item.city === selectedCity &&
+            format(parseISO(item.schedule_date), "yyyy-MM") ===
+              format(startDate, "yyyy-MM")
         );
+
         const sortedPayments = filteredData.sort(
-          (a, b) => new Date(b.datetime) - new Date(a.datetime)
+          (a, b) => new Date(b.schedule_date) - new Date(a.schedule_date)
         );
+
         const formattedPayments = sortedPayments.map((payment) => ({
           junkshop: payment.junkshop,
           datetime: format(
@@ -275,8 +683,8 @@ export default function Dashboard() {
         fetchTotalCommission();
         fetchTotalBookingFee();
         fetchTotalPenalties();
-        fetchTotalReceivables(); // Fetch total receivables when user is authenticated
-        fetchTotalRecentPayments(); // Fetch recent payments data
+        fetchTotalReceivables();
+        fetchTotalRecentPayments();
       }
     };
 
@@ -323,7 +731,7 @@ export default function Dashboard() {
 
             <div className="flex relative">
               <button
-                className="items-center flex border rounded-xl px-3 py-[6px] mr-4"
+                className="items-center flex border rounded-xl px-3 py-[6px] mr-4 hover:bg-gray-100"
                 onClick={() => setDropdownOpen(!dropdownOpen)}
               >
                 <FaMapMarkerAlt />
@@ -348,25 +756,60 @@ export default function Dashboard() {
                 </div>
               )}
 
-              <button className="items-center flex border rounded-xl px-3 py-[6px] mr-4">
+              <button className="items-center flex border rounded-xl px-3 py-[6px] mr-4 hover:bg-gray-100">
                 <FaBuilding />
                 <div>
                   <p className="px-4 text-xs font-semibold">All Junkshops</p>
                 </div>
               </button>
+              <div className="items-start justify-center flex">
+                <button
+                  onClick={handleDropdownToggle}
+                  className="items-center flex border rounded-xl rounded-e-none px-3 py-[6px] bg-white border-gray-300 hover:bg-gray-100"
+                >
+                  <div className="pl-3 py-[6px]">
+                    <FaCalendarAlt />
+                  </div>
+                  <div>
+                    <p className="px-4 text-xs font-semibold">
+                      {selectedDateType}
+                    </p>
+                  </div>
+                  <div className="pl-2">
+                    <FaChevronDown />
+                  </div>
+                </button>
+                {isOpen && (
+                  <div className="absolute right-38 top-9 w-40 bg-white border border-gray-300 rounded-lg shadow-lg z-10]">
+                    <ul className="text-sm text-center">
+                      {["yearly", "monthly", "weekly", "daily"].map(
+                        (dateType) => (
+                          <li
+                            key={dateType}
+                            onClick={() => handleDateTypeSelect(dateType)}
+                            className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          >
+                            {dateType}
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </div>
 
               <div
-                className="flex items-center border rounded-xl px-3 py-[6px] mr-4"
-                style={{ width: "170px" }}
+                className="flex justify-center
+                 items-center border border-l-0 border-gray-300 rounded-xl rounded-s-none py-[6px] mr-4"
+                style={{ width: "150px" }}
               >
-                <FaCalendarAlt />
-                <div className="flex">
+                <div className="">
                   <DatePicker
                     selected={startDate}
                     onChange={(date) => setStartDate(date)}
                     dateFormat="MMMM yyyy"
                     showMonthYearPicker
-                    className="px-2 text-xs font-semibold w-full text-center"
+                    className="px-2 text-xs font-semibold text-center w-[120px] items-center mb-1"
                     popperPlacement="bottom-end"
                   />
                 </div>
