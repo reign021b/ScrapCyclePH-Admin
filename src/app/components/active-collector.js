@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { FaCheckCircle, FaPlusCircle, FaRegCircle } from "react-icons/fa";
 import { supabase } from "@/utils/supabase/client";
 
-async function fetchDailyBookingsSummary(city) {
+const fetchDailyBookingsSummary = async (city) => {
   try {
     const { data, error } = await supabase.rpc(
       "get_booking_statistics_for_today",
       {
-        city_name: city, // Pass the city as a parameter
+        city_name: city,
       }
     );
     if (error) {
@@ -19,7 +19,7 @@ async function fetchDailyBookingsSummary(city) {
     console.error("Unexpected error fetching data:", error);
     return [];
   }
-}
+};
 
 const formatDate = (dateStr) => {
   const [year, month, day] = dateStr.split("-");
@@ -37,39 +37,70 @@ const ActiveCollector = ({ activeCity, selectedDate, onLinerIdSelect }) => {
   const [summaryData, setSummaryData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [selectedLinerId, setSelectedLinerId] = useState(null); // New state for selected liner
+  const [selectedLinerId, setSelectedLinerId] = useState(null);
+  const [bookings, setBookings] = useState([]); // State to store bookings data
 
   useEffect(() => {
     const getData = async () => {
       try {
-        setLoading(true); // Start loading
+        setLoading(true);
         const allData = await fetchDailyBookingsSummary(activeCity);
+        setBookings(allData); // Store all bookings data
         const filteredData = allData.filter(
           (item) => item.schedule_date === selectedDate
         );
         setSummaryData(filteredData);
-        setError(null); // Clear any previous errors
+        setError(null);
       } catch (err) {
         console.error("Failed to fetch data:", err);
         setError("Failed to fetch data.");
       } finally {
-        setLoading(false); // Stop loading
+        setLoading(false);
       }
     };
 
     getData();
-  }, [activeCity, selectedDate]); // Re-run the effect when activeCity or selectedDate changes
+  }, [activeCity, selectedDate]);
 
   const handleLinerClick = (linerId) => {
-    // Toggle selection
     if (selectedLinerId === linerId) {
-      setSelectedLinerId(null); // Unselect if already selected
-      onLinerIdSelect(null); // Notify parent to clear selection
+      setSelectedLinerId(null);
+      onLinerIdSelect(null);
     } else {
-      setSelectedLinerId(linerId); // Select new liner
-      onLinerIdSelect(linerId); // Notify parent of new selection
+      setSelectedLinerId(linerId);
+      onLinerIdSelect(linerId);
     }
   };
+
+  // Generate color mapping based on sorted liner IDs
+  const generateColorMapping = (bookings) => {
+    const colors = [
+      "#FF0000", // Red
+      "#0000FF", // Blue
+      "#00FF00", // Green
+      "#FFFF00", // Yellow
+      "#800080", // Purple
+      "#FFA500", // Orange
+      "#FFC0CB", // Pink
+      "#00FFFF", // Cyan
+    ];
+
+    const uniqueLinerIds = [
+      ...new Set(bookings.map((booking) => booking.liner_id)),
+    ].sort();
+
+    const colorMapping = {};
+    uniqueLinerIds.forEach((id, index) => {
+      colorMapping[id] = colors[index % colors.length];
+    });
+
+    return colorMapping;
+  };
+
+  const colorMapping = useMemo(
+    () => generateColorMapping(bookings),
+    [bookings]
+  );
 
   if (loading) {
     return <p className="text-center mt-5">Loading data...</p>;
@@ -97,12 +128,13 @@ const ActiveCollector = ({ activeCity, selectedDate, onLinerIdSelect }) => {
           const totalNumberOfBookings = item.total_number_of_bookings || 0;
           const cancelledBooking = item.cancelled_booking || 0;
 
+          const borderColor = colorMapping[item.liner_id] || "#000000"; // Default to black if no color
+
           return (
             <button
               key={index}
-              className={`border p-5 m-4 rounded-md transition duration-100 hover:bg-gray-50 w-full text-left focus:outline-none focus:ring-2 ${
-                selectedLinerId === item.liner_id ? "bg-blue-100" : "bg-white"
-              }`}
+              className={`border-2 p-5 m-4 rounded-md transition duration-100 hover:bg-gray-50 w-full text-left focus:outline-none focus:ring-2`}
+              style={{ borderColor }}
               onClick={() => handleLinerClick(item.liner_id)}
             >
               <div className="flex mb-3">
