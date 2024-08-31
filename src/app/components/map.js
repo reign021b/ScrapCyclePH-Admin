@@ -57,12 +57,15 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
     const mapping = {};
     let colorIndex = 0;
 
-    bookings.forEach((booking) => {
-      if (booking.liner_id && !(booking.liner_id in mapping)) {
-        mapping[booking.liner_id] =
-          shadowColors[colorIndex % shadowColors.length];
-        colorIndex++;
-      }
+    const sortedLinerIds = [
+      ...new Set(bookings.map((booking) => booking.liner_id)),
+    ]
+      .filter((id) => id) // Filter out undefined or null values
+      .sort(); // Sort alphabetically
+
+    sortedLinerIds.forEach((id) => {
+      mapping[id] = shadowColors[colorIndex % shadowColors.length];
+      colorIndex++;
     });
 
     return mapping;
@@ -72,25 +75,22 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
     if (!L) return null;
 
     try {
-      // Define drop-shadow style if a shadowColor is provided
       const shadowStyle = shadowColor
         ? `filter: drop-shadow(0px 2px 4px ${shadowColor});`
         : "";
 
       return L.divIcon({
-        className: "custom-marker-icon", // Base class for marker
-        html: `
-          <div style="
+        className: "custom-marker-icon",
+        html: `<div style="
             background-image: url(${iconUrl}); 
             width: ${size[0]}px; 
             height: ${size[1]}px; 
             background-size: ${size[0]}px ${size[1]}px; 
             ${shadowStyle}
-          "></div>
-        `,
+          "></div>`,
         iconSize: size,
-        iconAnchor: [size[0] / 2, size[1]], // Position the icon correctly
-        popupAnchor: [0, -size[1]], // Position the popup correctly
+        iconAnchor: [size[0] / 2, size[1]],
+        popupAnchor: [0, -size[1]],
       });
     } catch (error) {
       console.error("Error creating icon:", error);
@@ -101,7 +101,6 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
   const getIcon = (booking) => {
     if (!L) return null;
 
-    // Determine the shadow color based on liner_id
     const shadowColor = linerIdToShadowColor[booking.liner_id] || null;
 
     if (booking.cancelled === true) {
@@ -113,7 +112,7 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
     } else if (booking.liner_id === null) {
       return createIcon(
         "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/assign-liner.gif",
-        [42, 40] // No shadowColor provided for null liner_id
+        [42, 40]
       );
     } else if (booking.status === "true") {
       return createIcon(
@@ -134,11 +133,9 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
     setSelectedBookingId(bookingId);
   };
 
-  // Filter bookings based on the linerId
   const filteredBookings = useMemo(() => {
-    if (!linerId) return bookings; // Check for null or undefined
-    const result = bookings.filter((booking) => booking.liner_id === linerId);
-    return result;
+    if (!linerId) return bookings;
+    return bookings.filter((booking) => booking.liner_id === linerId);
   }, [bookings, linerId]);
 
   const mapKey = `${activeCity}-${center[0]}-${center[1]}`;
