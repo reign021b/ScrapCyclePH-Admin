@@ -94,6 +94,21 @@ export default function Dashboard() {
 
   const datePickerProps = getDatePickerProps();
 
+  const getPeriodText = () => {
+    switch (selectedDateType) {
+      case "yearly":
+        return "this year";
+      case "monthly":
+        return "this month";
+      case "daily":
+        return "today";
+      case "weekly":
+        return "this week";
+      default:
+        return "this month"; // Default to monthly if no valid type
+    }
+  };
+
   useEffect(() => {
     const fetchCities = async () => {
       try {
@@ -880,7 +895,7 @@ export default function Dashboard() {
             <div className="pl-5 py-3">
               <p className="font-bold">Dashboard</p>
               <p className="text-sm">
-                This is your overview of this month&apos;s performance.
+                This is your overview of {getPeriodText()}.&apos;s performance.
               </p>
             </div>
 
@@ -1049,8 +1064,8 @@ export default function Dashboard() {
                   <div className="px-5 py-3">
                     <p className="font-bold">Payments Breakdown</p>
                     <p className="text-xs pt-1">
-                      This is your overview of the payments breakdown for this
-                      month.
+                      This is your overview of the payments breakdown for{" "}
+                      {getPeriodText()}.
                     </p>
                   </div>
                 </div>
@@ -1074,8 +1089,8 @@ export default function Dashboard() {
                     <div className="px-5 py-3">
                       <p className="font-bold">Receivables</p>
                       <p className="text-xs">
-                        This is your overview of the unpaid payments for this
-                        month.
+                        This is your overview of the unpaid payments for{" "}
+                        {getPeriodText()}.
                       </p>
                       <div className="flex items-end justify-between h-[85px]">
                         <p className="text-3xl font-semibold">
