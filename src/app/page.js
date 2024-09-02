@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
 import StatsBar from "./components/StatsBar";
 import Sidebar from "./components/Sidebar";
-import Map from "./components/Map";
+import Map from "./components/map";
 import AppBar from "./components/AppBar";
 
 export default function Home() {
@@ -90,7 +90,7 @@ export default function Home() {
         router.push("/login");
       } else {
         fetchOperator(session);
-        const intervalId = setInterval(fetchBookings, 1000);
+        const intervalId = setInterval(fetchBookings, 5000);
 
         return () => clearInterval(intervalId);
       }
