@@ -975,7 +975,7 @@ export default function Dashboard() {
                     }
                     onChange={handleDateChange}
                     {...datePickerProps}
-                    className="px-2 text-xs font-semibold text-center w-[120px] items-center mb-1"
+                    className="px-2 text-xs font-semibold text-center w-[140px] items-center mb-1"
                     popperPlacement="bottom-end"
                   />
                 </div>
