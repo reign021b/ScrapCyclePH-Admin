@@ -74,24 +74,29 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
     }
   }, [activeCity]);
 
-  // Create a mapping from liner_id to shadow color
-  const linerIdToShadowColor = useMemo(() => {
+  // Create a mapping from liner_id and collector_id to shadow color
+  const linerAndCollectorIdToShadowColor = useMemo(() => {
     const mapping = {};
     let colorIndex = 0;
 
-    const sortedLinerIds = [
-      ...new Set(bookings.map((booking) => booking.liner_id)),
+    // Create a combined set of unique liner_ids and collector_ids
+    const uniqueIds = [
+      ...new Set([
+        ...bookings.map((booking) => booking.liner_id),
+        ...collectorLocations.map((collector) => collector.collector_id),
+      ]),
     ]
       .filter((id) => id) // Filter out undefined or null values
       .sort(); // Sort alphabetically
 
-    sortedLinerIds.forEach((id) => {
+    // Assign colors to each unique ID
+    uniqueIds.forEach((id) => {
       mapping[id] = shadowColors[colorIndex % shadowColors.length];
       colorIndex++;
     });
 
     return mapping;
-  }, [bookings]);
+  }, [bookings, collectorLocations]);
 
   const createIcon = (iconUrl, size, shadowColor = null) => {
     if (!L) return null;
@@ -123,7 +128,8 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
   const getIcon = (booking) => {
     if (!L) return null;
 
-    const shadowColor = linerIdToShadowColor[booking.liner_id] || null;
+    const shadowColor =
+      linerAndCollectorIdToShadowColor[booking.liner_id] || null;
 
     if (booking.cancelled === true) {
       return createIcon(
@@ -235,6 +241,8 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
           }
 
           const leafletCoordinates = L.latLng(latitude, longitude);
+          const shadowColor =
+            linerAndCollectorIdToShadowColor[collector.collector_id] || null;
 
           return (
             <Marker
@@ -246,7 +254,8 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
               }}
               icon={createIcon(
                 "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/CollectorIcon.png",
-                [40, 40]
+                [40, 40],
+                shadowColor // Use color mapping for collectors
               )}
             >
               <Popup>

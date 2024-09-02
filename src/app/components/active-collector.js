@@ -114,9 +114,11 @@ const ActiveCollector = ({ activeCity, selectedDate, onLinerIdSelect }) => {
   return (
     <>
       {summaryData.length === 0 ? (
-        <p className="mt-5 text-center text-sm">
-          No data available for {activeCity} on {formatDate(selectedDate)}.
-        </p>
+        <div className="flex justify-center items-center">
+          <p className="mt-5 text-center text-sm">
+            No data available for {activeCity} on {formatDate(selectedDate)}.
+          </p>
+        </div>
       ) : (
         summaryData.map((item, index) => {
           const totalTrade = item.total_trade
