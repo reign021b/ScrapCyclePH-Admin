@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { FaCheckCircle, FaPlusCircle, FaRegCircle } from "react-icons/fa";
 import { supabase } from "@/utils/supabase/client";
@@ -131,11 +131,8 @@ const ActiveCollector = ({ activeCity, selectedDate, onLinerIdSelect }) => {
           const totalNumberOfBookings = item.total_number_of_bookings || 0;
           const cancelledBooking = item.cancelled_booking || 0;
 
-          // Set border color to red if there is only one item, otherwise use color mapping
-          const borderColor =
-            summaryData.length === 1
-              ? "#FF0000" // Red for single item
-              : colorMapping[item.liner_id] || "#000000"; // Default to black if no color
+          // Always use color mapping for border color
+          const borderColor = colorMapping[item.liner_id] || "#000000"; // Default to black if no color
 
           return (
             <button

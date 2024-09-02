@@ -259,7 +259,10 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
               )}
             >
               <Popup>
-                <strong>Collector Name: {collector.full_name}</strong>
+                <p className="font-normal">
+                  Collector Name:{<br />}
+                  <span className="font-semibold">{collector.full_name}</span>
+                </p>
               </Popup>
             </Marker>
           );
