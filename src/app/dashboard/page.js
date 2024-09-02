@@ -283,8 +283,6 @@ export default function Dashboard() {
               .slice(-6); // Default to 6 months
         }
 
-        console.log("Date Range:", dateRange);
-
         const { data, error } = await supabase.rpc(
           "get_total_commission_for_dashboard"
         );
@@ -329,7 +327,6 @@ export default function Dashboard() {
           );
         });
 
-        console.log("Total Commissions:", totalCommissions);
         setTotalCommission(totalCommissions);
       } catch (error) {
         console.error(
@@ -675,9 +672,6 @@ export default function Dashboard() {
             }).map((date) => format(date, "yyyy-MM"));
         }
 
-        // Debug Logging
-        console.log("Date Range:", dateRange);
-
         const { data, error } = await supabase.rpc(
           "get_total_receivables_for_dashboard"
         );
@@ -773,10 +767,6 @@ export default function Dashboard() {
             );
             formattedEndDate = format(endOfMonth(currentDate), "yyyy-MM-dd");
         }
-
-        // Debug Logging
-        console.log("Formatted Start Date:", formattedStartDate);
-        console.log("Formatted End Date:", formattedEndDate);
 
         const { data, error } = await supabase.rpc(
           "get_total_recent_payments_for_dashboard"

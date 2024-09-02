@@ -113,7 +113,7 @@ const ActiveCollector = ({ activeCity, selectedDate, onLinerIdSelect }) => {
   return (
     <>
       {summaryData.length === 0 ? (
-        <p className="mt-5 text-center text-lg">
+        <p className="mt-5 text-center text-sm">
           No data available for {activeCity} on {formatDate(selectedDate)}.
         </p>
       ) : (
