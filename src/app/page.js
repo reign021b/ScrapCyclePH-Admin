@@ -90,7 +90,7 @@ export default function Home() {
         router.push("/login");
       } else {
         fetchOperator(session);
-        const intervalId = setInterval(fetchBookings, 1000);
+        const intervalId = setInterval(fetchBookings, 5000);
 
         return () => clearInterval(intervalId);
       }
