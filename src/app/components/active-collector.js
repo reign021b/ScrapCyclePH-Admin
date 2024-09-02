@@ -39,6 +39,7 @@ const ActiveCollector = ({ activeCity, selectedDate, onLinerIdSelect }) => {
   const [error, setError] = useState(null);
   const [selectedLinerId, setSelectedLinerId] = useState(null);
   const [bookings, setBookings] = useState([]); // State to store bookings data
+  const [colorMapping, setColorMapping] = useState({}); // State to store color mapping
 
   useEffect(() => {
     const getData = async () => {
@@ -62,6 +63,36 @@ const ActiveCollector = ({ activeCity, selectedDate, onLinerIdSelect }) => {
     getData();
   }, [activeCity, selectedDate]);
 
+  useEffect(() => {
+    // Re-generate color mapping when bookings change
+    const generateColorMapping = (bookings) => {
+      const colors = [
+        "#FF0000", // Red
+        "#0000FF", // Blue
+        "#00FF00", // Green
+        "#FFFF00", // Yellow
+        "#800080", // Purple
+        "#FFA500", // Orange
+        "#FFC0CB", // Pink
+        "#00FFFF", // Cyan
+      ];
+
+      const uniqueLinerIds = [
+        ...new Set(bookings.map((booking) => booking.liner_id)),
+      ].sort();
+
+      const colorMapping = {};
+      uniqueLinerIds.forEach((id, index) => {
+        // Assign a unique color based on the liner ID
+        colorMapping[id] = colors[index % colors.length];
+      });
+
+      return colorMapping;
+    };
+
+    setColorMapping(generateColorMapping(bookings));
+  }, [bookings]);
+
   const handleLinerClick = (linerId) => {
     if (selectedLinerId === linerId) {
       setSelectedLinerId(null);
@@ -71,36 +102,6 @@ const ActiveCollector = ({ activeCity, selectedDate, onLinerIdSelect }) => {
       onLinerIdSelect(linerId);
     }
   };
-
-  // Generate color mapping based on sorted liner IDs
-  const generateColorMapping = (bookings) => {
-    const colors = [
-      "#FF0000", // Red
-      "#0000FF", // Blue
-      "#00FF00", // Green
-      "#FFFF00", // Yellow
-      "#800080", // Purple
-      "#FFA500", // Orange
-      "#FFC0CB", // Pink
-      "#00FFFF", // Cyan
-    ];
-
-    const uniqueLinerIds = [
-      ...new Set(bookings.map((booking) => booking.liner_id)),
-    ].sort();
-
-    const colorMapping = {};
-    uniqueLinerIds.forEach((id, index) => {
-      colorMapping[id] = colors[index % colors.length];
-    });
-
-    return colorMapping;
-  };
-
-  const colorMapping = useMemo(
-    () => generateColorMapping(bookings),
-    [bookings]
-  );
 
   if (loading) {
     return <p className="text-center mt-5">Loading data...</p>;
@@ -128,12 +129,18 @@ const ActiveCollector = ({ activeCity, selectedDate, onLinerIdSelect }) => {
           const totalNumberOfBookings = item.total_number_of_bookings || 0;
           const cancelledBooking = item.cancelled_booking || 0;
 
-          const borderColor = colorMapping[item.liner_id] || "#000000"; // Default to black if no color
+          // Set border color to red if there is only one item, otherwise use color mapping
+          const borderColor =
+            summaryData.length === 1
+              ? "#FF0000" // Red for single item
+              : colorMapping[item.liner_id] || "#000000"; // Default to black if no color
 
           return (
             <button
               key={index}
-              className={`border-2 p-5 m-4 rounded-md transition duration-100 hover:bg-gray-50 w-full text-left focus:outline-none focus:ring-2`}
+              className={`border-2 p-5 m-4 rounded-md transition duration-100 hover:bg-gray-50 w-full text-left focus:outline-none focus:ring-2 ${
+                selectedLinerId === item.liner_id ? "ring-2 ring-offset-2" : ""
+              }`}
               style={{ borderColor }}
               onClick={() => handleLinerClick(item.liner_id)}
             >
