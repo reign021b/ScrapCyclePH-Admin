@@ -1,6 +1,7 @@
 import { useMemo, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
+import { supabase } from "@/utils/supabase/client"; // Import the Supabase client
 
 // Dynamically import MapContainer and other components from react-leaflet
 const MapContainer = dynamic(
@@ -32,11 +33,32 @@ const shadowColors = [
 
 const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
   const [L, setL] = useState(null);
+  const [collectorLocations, setCollectorLocations] = useState([]);
 
   useEffect(() => {
     import("leaflet").then((leaflet) => {
       setL(leaflet.default);
     });
+  }, []);
+
+  useEffect(() => {
+    const fetchCollectorLocations = async () => {
+      const { data, error } = await supabase.rpc("get_collector_location");
+      if (error) {
+        console.error("Error fetching collector locations:", error);
+      } else {
+        setCollectorLocations(data);
+      }
+    };
+
+    // Initial fetch
+    fetchCollectorLocations();
+
+    // Set interval to fetch every 5 seconds
+    const intervalId = setInterval(fetchCollectorLocations, 5000);
+
+    // Cleanup interval on component unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   const defaultCenter = [7.093545, 125.599351];
@@ -196,6 +218,39 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
                 {booking.contact_number}
                 <br />
                 (Waste Type: {booking.waste_type})
+              </Popup>
+            </Marker>
+          );
+        })}
+        {collectorLocations.map((collector) => {
+          const [latitudeStr, longitudeStr] = collector.location.split(" ");
+          const latitude = parseFloat(latitudeStr);
+          const longitude = parseFloat(longitudeStr);
+
+          if (isNaN(latitude) || isNaN(longitude)) {
+            console.warn(
+              `Invalid coordinates for collector ID: ${collector.collector_id}`
+            );
+            return null;
+          }
+
+          const leafletCoordinates = L.latLng(latitude, longitude);
+
+          return (
+            <Marker
+              key={collector.collector_id}
+              position={leafletCoordinates}
+              eventHandlers={{
+                mouseover: (e) => e.target.openPopup(),
+                mouseout: (e) => e.target.closePopup(),
+              }}
+              icon={createIcon(
+                "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/CollectorIcon.png",
+                [40, 40]
+              )}
+            >
+              <Popup>
+                <strong>Collector Name: {collector.full_name}</strong>
               </Popup>
             </Marker>
           );
