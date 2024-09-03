@@ -328,10 +328,10 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
 
           const icon = createCollectorIcon(
             "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/dashboard/CollectorBaseIcon.svg",
-            [33, 48], // Base icon size
+            [31, 45], // Base icon size
             fillColor, // Use dynamic fill color
             "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/dashboard/CollectorTopIcon.png",
-            [26, 26], // Top icon size
+            [24, 24], // Top icon size
             5 // Y-offset of the top icon
 
           );
