@@ -1,7 +1,8 @@
 import { useMemo, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
-import { supabase } from "@/utils/supabase/client"; // Import the Supabase client
+import "leaflet-fullscreen/dist/leaflet.fullscreen.css"; // Import the CSS for the fullscreen plugin
+import { supabase } from "@/utils/supabase/client";
 
 // Dynamically import MapContainer and other components from react-leaflet
 const MapContainer = dynamic(
@@ -37,6 +38,8 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
 
   useEffect(() => {
     import("leaflet").then((leaflet) => {
+      require("leaflet-fullscreen"); // Import the fullscreen plugin
+
       setL(leaflet.default);
     });
   }, []);
@@ -180,6 +183,7 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
         center={center}
         zoom={13}
         scrollWheelZoom={false}
+        fullscreenControl={true} // Enable fullscreen control
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -244,25 +248,26 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
           const shadowColor =
             linerAndCollectorIdToShadowColor[collector.collector_id] || null;
 
+          const icon = createIcon(
+            "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/dashboard/CollectorIcon.png",
+            [32, 32],
+            shadowColor
+          );
+
           return (
             <Marker
               key={collector.collector_id}
               position={leafletCoordinates}
+              icon={icon}
               eventHandlers={{
                 mouseover: (e) => e.target.openPopup(),
                 mouseout: (e) => e.target.closePopup(),
               }}
-              icon={createIcon(
-                "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/CollectorIcon.png",
-                [40, 40],
-                shadowColor // Use color mapping for collectors
-              )}
             >
               <Popup>
-                <p className="font-normal">
-                  Collector Name:{<br />}
-                  <span className="font-semibold">{collector.full_name}</span>
-                </p>
+                <strong>{collector.full_name}</strong>
+                <br />
+                {collector.phone_number}
               </Popup>
             </Marker>
           );
