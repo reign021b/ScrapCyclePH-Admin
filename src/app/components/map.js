@@ -249,7 +249,7 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
             linerAndCollectorIdToShadowColor[collector.collector_id] || null;
 
           const icon = createIcon(
-            "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/collector.gif",
+            "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/dashboard/CollectorIcon.png",
             [32, 32],
             shadowColor
           );
