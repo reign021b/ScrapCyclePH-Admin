@@ -101,7 +101,7 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
     return mapping;
   }, [bookings, collectorLocations]);
 
-  const createIcon = (iconUrl, size, shadowColor = null) => {
+  const createBookingIcon = (iconUrl, size, shadowColor = null) => {
     if (!L) return null;
 
     try {
@@ -123,36 +123,114 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
         popupAnchor: [0, -size[1]],
       });
     } catch (error) {
-      console.error("Error creating icon:", error);
+      console.error("Error creating booking icon:", error);
       return null;
     }
   };
 
-  const getIcon = (booking) => {
+  const createCollectorIcon = (
+    baseIconUrl,
+    baseSize,
+    fillColor,
+    topIconUrl = null,
+    topIconSize = null,
+    topIconYOffset = 0
+  ) => {
+    if (!L) return null;
+
+    try {
+      const baseSizeActual = baseSize || [40, 40];
+      const topSizeActual = topIconSize || [30, 30];
+
+      // Embed the SVG with dynamic fill color support
+      const svgContent = `
+        <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
+             width="${baseSizeActual[0]}px" height="${baseSizeActual[1]}px" viewBox="0 0 282 402"
+             preserveAspectRatio="xMidYMid meet">
+          <g transform="translate(0,402) scale(0.1,-0.1)"
+             fill="currentColor" stroke="none">
+            <path d="M1227 4010 c-163 -19 -363 -85 -512 -171 -362 -208 -601 -536 -691
+            -949 -25 -115 -25 -385 0 -518 108 -582 545 -1355 1240 -2195 l131 -158 39 43
+            c74 82 293 353 398 493 593 791 924 1468 964 1975 14 183 -34 459 -110 638
+            -178 414 -543 717 -986 818 -120 27 -344 39 -473 24z m275 -901 c215 -45 376
+            -230 395 -454 23 -282 -212 -535 -497 -535 -220 0 -427 159 -482 369 -94 361
+            221 696 584 620z"/>
+          </g>
+        </svg>
+      `;
+
+      const html = `
+        <div style="
+          position: relative;
+          width: ${baseSizeActual[0]}px;
+          height: ${baseSizeActual[1]}px;
+          color: ${fillColor}; /* Set the fill color dynamically */
+        ">
+          <div style="
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+          ">
+            ${svgContent}
+          </div>
+          ${
+            topIconUrl
+              ? `
+            <img src="${topIconUrl}" 
+                 style="
+                   position: absolute;
+                   top: ${topIconYOffset}px;
+                   left: ${(baseSizeActual[0] - topSizeActual[0]) / 2}px;
+                   width: ${topSizeActual[0]}px;
+                   height: ${topSizeActual[1]}px;
+                 "
+            />
+          `
+              : ""
+          }
+        </div>
+      `;
+
+      return L.divIcon({
+        className: "custom-marker-icon",
+        html: html,
+        iconSize: baseSizeActual,
+        iconAnchor: [baseSizeActual[0] / 2, baseSizeActual[1]],
+        popupAnchor: [0, -baseSizeActual[1]],
+      });
+    } catch (error) {
+      console.error("Error creating collector icon:", error);
+      return null;
+    }
+  };
+
+  const getBookingIcon = (booking) => {
     if (!L) return null;
 
     const shadowColor =
       linerAndCollectorIdToShadowColor[booking.liner_id] || null;
 
     if (booking.cancelled === true) {
-      return createIcon(
+      return createBookingIcon(
         "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/cancelled-gif.gif",
         [32, 32],
         shadowColor
       );
     } else if (booking.liner_id === null) {
-      return createIcon(
+      return createBookingIcon(
         "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/assign-liner.gif",
         [42, 40]
       );
     } else if (booking.status === "true") {
-      return createIcon(
+      return createBookingIcon(
         "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/completed-gif.gif",
         [35, 40],
         shadowColor
       );
     } else {
-      return createIcon(
+      return createBookingIcon(
         "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/pending-gif-2.gif",
         [35, 38],
         shadowColor
@@ -207,7 +285,7 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
           }
 
           const leafletCoordinates = L.latLng(latitude, longitude);
-          const icon = getIcon(booking);
+          const icon = getBookingIcon(booking);
 
           return (
             <Marker
@@ -245,13 +323,17 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
           }
 
           const leafletCoordinates = L.latLng(latitude, longitude);
-          const shadowColor =
+          const fillColor =
             linerAndCollectorIdToShadowColor[collector.collector_id] || null;
 
-          const icon = createIcon(
-            "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/dashboard/CollectorIcon.png",
-            [40, 40],
-            shadowColor
+          const icon = createCollectorIcon(
+            "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/dashboard/CollectorBaseIcon.svg",
+            [33, 48], // Base icon size
+            fillColor, // Use dynamic fill color
+            "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/dashboard/CollectorTopIcon.png",
+            [26, 26], // Top icon size
+            5 // Y-offset of the top icon
+
           );
 
           return (
@@ -265,9 +347,10 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
               }}
             >
               <Popup>
-                <strong>{collector.full_name}</strong>
-                <br />
-                {collector.phone_number}
+                <p className="font-normal">
+                  Collector Name:{<br />}
+                  <span className="font-semibold">{collector.full_name}</span>
+                </p>
               </Popup>
             </Marker>
           );
