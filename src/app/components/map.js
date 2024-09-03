@@ -250,7 +250,7 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
 
           const icon = createIcon(
             "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/dashboard/CollectorIcon.png",
-            [32, 32],
+            [40, 40],
             shadowColor
           );
 
