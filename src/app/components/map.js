@@ -333,6 +333,7 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
             "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/dashboard/CollectorTopIcon.png",
             [26, 26], // Top icon size
             5 // Y-offset of the top icon
+
           );
 
           return (
