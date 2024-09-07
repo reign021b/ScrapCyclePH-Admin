@@ -775,7 +775,7 @@ export default function Dashboard() {
         if (error) throw error;
 
         const filteredData = data.filter((item) => {
-          const itemDate = new Date(item.schedule_date);
+          const itemDate = new Date(item.paid_time);
 
           switch (dateType) {
             case "yearly":
@@ -808,7 +808,7 @@ export default function Dashboard() {
         });
 
         const sortedPayments = filteredData.sort(
-          (a, b) => new Date(b.schedule_date) - new Date(a.schedule_date)
+          (a, b) => new Date(b.paid_time) - new Date(a.paid_time)
         );
 
         const formattedPayments = sortedPayments.map((payment) => ({
