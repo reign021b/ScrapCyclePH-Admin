@@ -156,9 +156,9 @@ export default function Dashboard() {
 
         // Calculate weekly range based on the startDate
         const startOfWeekDate = startOfWeek(validStartDate, {
-          weekStartsOn: 1,
+          weekStartsOn: 0,
         });
-        const endOfWeekDate = endOfWeek(validStartDate, { weekStartsOn: 1 });
+        const endOfWeekDate = endOfWeek(validStartDate, { weekStartsOn: 0 });
 
         const formattedStartOfWeek = format(startOfWeekDate, "yyyy-MM-dd");
         const formattedEndOfWeek = format(endOfWeekDate, "yyyy-MM-dd");
@@ -255,15 +255,15 @@ export default function Dashboard() {
             const weeks = eachWeekOfInterval({
               start: startOfWeek(
                 new Date(currentDate.getTime() - 6 * 7 * 24 * 60 * 60 * 1000),
-                { weekStartsOn: 1 }
+                { weekStartsOn: 0 }
               ),
-              end: endOfWeek(currentDate, { weekStartsOn: 1 }),
+              end: endOfWeek(currentDate, { weekStartsOn: 0 }),
             }).map((date) => ({
               start: format(
-                startOfWeek(date, { weekStartsOn: 1 }),
+                startOfWeek(date, { weekStartsOn: 0 }),
                 "yyyy-MM-dd"
               ),
-              end: format(endOfWeek(date, { weekStartsOn: 1 }), "yyyy-MM-dd"),
+              end: format(endOfWeek(date, { weekStartsOn: 0 }), "yyyy-MM-dd"),
             }));
             dateRange = weeks.slice(-6); // Limit to 6 weeks
             break;
@@ -380,17 +380,17 @@ export default function Dashboard() {
               return eachWeekOfInterval({
                 start: startOfWeek(
                   new Date(currentDate.getTime() - 6 * 7 * 24 * 60 * 60 * 1000),
-                  { weekStartsOn: 1 }
+                  { weekStartsOn: 0 }
                 ),
-                end: endOfWeek(currentDate, { weekStartsOn: 1 }),
+                end: endOfWeek(currentDate, { weekStartsOn: 0 }),
               })
                 .map((date) => ({
                   start: format(
-                    startOfWeek(date, { weekStartsOn: 1 }),
+                    startOfWeek(date, { weekStartsOn: 0 }),
                     "yyyy-MM-dd"
                   ),
                   end: format(
-                    endOfWeek(date, { weekStartsOn: 1 }),
+                    endOfWeek(date, { weekStartsOn: 0 }),
                     "yyyy-MM-dd"
                   ),
                 }))
@@ -517,17 +517,17 @@ export default function Dashboard() {
               return eachWeekOfInterval({
                 start: startOfWeek(
                   new Date(currentDate.getTime() - 6 * 7 * 24 * 60 * 60 * 1000),
-                  { weekStartsOn: 1 }
+                  { weekStartsOn: 0 }
                 ),
-                end: endOfWeek(currentDate, { weekStartsOn: 1 }),
+                end: endOfWeek(currentDate, { weekStartsOn: 0 }),
               })
                 .map((date) => ({
                   start: format(
-                    startOfWeek(date, { weekStartsOn: 1 }),
+                    startOfWeek(date, { weekStartsOn: 0 }),
                     "yyyy-MM-dd"
                   ),
                   end: format(
-                    endOfWeek(date, { weekStartsOn: 1 }),
+                    endOfWeek(date, { weekStartsOn: 0 }),
                     "yyyy-MM-dd"
                   ),
                 }))
@@ -650,12 +650,12 @@ export default function Dashboard() {
             dateRange = eachWeekOfInterval({
               start: startOfWeek(
                 new Date(currentDate.getTime() - 42 * 24 * 60 * 60 * 1000), // Calculate new date without modifying original
-                { weekStartsOn: 1 }
+                { weekStartsOn: 0 }
               ),
-              end: endOfWeek(new Date(), { weekStartsOn: 1 }),
+              end: endOfWeek(new Date(), { weekStartsOn: 0 }),
             }).map((date) => ({
               start: format(date, "yyyy-MM-dd"),
-              end: format(endOfWeek(date, { weekStartsOn: 1 }), "yyyy-MM-dd"),
+              end: format(endOfWeek(date, { weekStartsOn: 0 }), "yyyy-MM-dd"),
             }));
             break;
 
@@ -754,9 +754,9 @@ export default function Dashboard() {
             break;
           case "weekly":
             const startOfWeekDate = startOfWeek(currentDate, {
-              weekStartsOn: 1,
+              weekStartsOn: 0,
             });
-            const endOfWeekDate = endOfWeek(currentDate, { weekStartsOn: 1 });
+            const endOfWeekDate = endOfWeek(currentDate, { weekStartsOn: 0 });
             formattedStartDate = format(startOfWeekDate, "yyyy-MM-dd");
             formattedEndDate = format(endOfWeekDate, "yyyy-MM-dd");
             break;
