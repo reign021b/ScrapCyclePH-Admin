@@ -885,7 +885,7 @@ export default function Dashboard() {
             <div className="pl-5 py-3">
               <p className="font-bold">Dashboard</p>
               <p className="text-sm">
-                This is your overview of {getPeriodText()}.&apos;s performance.
+                This is your overview of {getPeriodText()}&apos;s performance.
               </p>
             </div>
 
