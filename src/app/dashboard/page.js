@@ -40,7 +40,7 @@ export default function Dashboard() {
   const [profilePath, setProfilePath] = useState(null);
   const [cities, setCities] = useState([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState("Davao City");
+  const [selectedCity, setSelectedCity] = useState("Tagum City");
   const [totalPayments, setTotalPayments] = useState(0);
   const [totalCommission, setTotalCommission] = useState(Array(6).fill(0));
   const [totalBookingFee, setTotalBookingFee] = useState(Array(6).fill(0));
