@@ -64,12 +64,12 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
     return () => clearInterval(intervalId);
   }, []);
 
-  const defaultCenter = [7.093545, 125.599351];
+  const defaultCenter = [7.446113, 125.80953];
 
   const center = useMemo(() => {
     switch (activeCity) {
-      case "Butuan City":
-        return [8.948061991080413, 125.54020391156156];
+      case "Tagum City":
+        return [7.446113, 125.80953];
       case "Davao City":
         return [7.093545, 125.599351];
       default:

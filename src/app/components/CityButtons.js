@@ -9,11 +9,11 @@ const CityButtons = ({ activeCity, setActiveCity }) => {
     <div className="w-full border-y font-medium bg-white flex">
       <button
         className={`w-full px-7 py-3 border-r ${
-          activeCity === "Butuan City" ? "bg-green-600 text-white" : "bg-white"
+          activeCity === "Tagum City" ? "bg-green-600 text-white" : "bg-white"
         }`}
-        onClick={() => handleClick("Butuan City")}
+        onClick={() => handleClick("Tagum City")}
       >
-        Butuan
+        Tagum
       </button>
       <button
         className={`w-full px-7 py-3 border-r ${
