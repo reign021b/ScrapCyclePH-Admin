@@ -262,7 +262,7 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
           <div className="font-bold m-3 text-black">
             Estimated Weight: <br />
             <p className="font-normal text-gray-500 mt-1">
-              {selectedBooking["estimated_weight"]} kg
+              {selectedBooking["estimated_weight"]}
             </p>
           </div>
         </div>
