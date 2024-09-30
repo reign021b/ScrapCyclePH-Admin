@@ -53,14 +53,18 @@ const StatsBar = ({ activeCity, onDateChange, selectedDate }) => {
       setCancelledCount(cancelledCount);
       setTotalSum(totalSum);
       setTotalCommission(totalCommission);
-    } catch (error) {
-      console.error("Error fetching booking counts:", error.message);
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
+    const interval = setInterval(() => {
+      fetchBookingCounts();
+    }, 5000);
+
     fetchBookingCounts();
-  }, [activeCity, selectedDate]); // Fetch data when activeCity or selectedDate changes
+
+    return () => clearInterval(interval);
+  }, [activeCity, selectedDate]);
 
   return (
     <div className="bg-white border-t px-4 flex w-full text-sm">
