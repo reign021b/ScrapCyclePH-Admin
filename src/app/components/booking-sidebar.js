@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { FaChevronDown, FaTimes } from "react-icons/fa";
 import { supabase } from "/utils/supabase/client";
 import ProfileImage from "./ProfileImage";
+import Image from "next/image";
 
 const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
   const [bookings, setBookings] = useState([]);
@@ -61,7 +62,7 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
   const fetchBookings = async () => {
     try {
       const { data, error } = await supabase.rpc(
-        "get_sidebar_bookings_for_today_ver2"
+        "get_sidebar_bookings_for_today"
       );
 
       if (error) {
@@ -234,6 +235,28 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
               : "Incomplete"}
           </div>
         </div>
+
+        {selectedBooking.cancelled_reason && (
+          <>
+            <div className="text-center w-full text-black mb-4">
+              <span className="font-semibold">Reason: </span>
+              {selectedBooking.cancelled_reason}
+            </div>
+            <hr />
+          </>
+        )}
+
+        {selectedBooking.image_path && (
+          <div className="flex justify-center w-full mt-2">
+            <Image
+              src={`https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/${selectedBooking.image_path}`}
+              width={300}
+              height={300}
+              alt="booking image"
+              style={{ borderRadius: "0.8rem" }}
+            />{" "}
+          </div>
+        )}
 
         <div className="font-semibold m-3 text-black">
           {selectedBooking.address_name}
