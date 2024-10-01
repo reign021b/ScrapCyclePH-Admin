@@ -5,10 +5,12 @@ const ProgressBarComponent = ({
   totalCount,
   cancelledCount,
 }) => {
-  // Calculate progress percentage
-  const percentage = totalCount
-    ? Math.round((completedCount / (totalCount - cancelledCount)) * 100)
-    : 0;
+  const validTotalCount =
+    totalCount && totalCount > cancelledCount ? totalCount - cancelledCount : 0;
+  const percentage =
+    validTotalCount > 0
+      ? Math.round((completedCount / validTotalCount) * 100)
+      : 0;
 
   return (
     <div className="flex-grow py-3 px-4 flex items-center justify-between border-r">
