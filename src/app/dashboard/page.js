@@ -613,119 +613,79 @@ export default function Dashboard() {
 
     const fetchTotalReceivables = async () => {
       try {
-        let dateRange;
-        const currentDate = new Date(startDate); // Create a new Date object to avoid mutability
+        const dateType = selectedDateType || "monthly";
+        const currentDate = new Date(startDate);
 
-        switch (selectedDateType || "monthly") {
+        let formattedStartDate, formattedEndDate;
+
+        switch (dateType) {
           case "yearly":
-            dateRange = eachYearOfInterval({
-              start: new Date(currentDate.getFullYear() - 5, 0, 1),
-              end: new Date(currentDate.getFullYear(), 11, 31),
-            }).map((date) => format(date, "yyyy"));
+            formattedStartDate = format(startOfYear(currentDate), "yyyy");
+            formattedEndDate = format(endOfYear(currentDate), "yyyy");
             break;
-
           case "monthly":
-            dateRange = eachMonthOfInterval({
-              start: startOfMonth(
-                new Date(
-                  currentDate.getFullYear(),
-                  currentDate.getMonth() - 5,
-                  1
-                )
-              ),
-              end: endOfMonth(currentDate),
-            }).map((date) => format(date, "yyyy-MM"));
+            formattedStartDate = format(startOfMonth(currentDate), "yyyy-MM");
+            formattedEndDate = format(endOfMonth(currentDate), "yyyy-MM");
             break;
-
           case "daily":
-            dateRange = eachDayOfInterval({
-              start: startOfDay(
-                new Date(currentDate.getTime() - 30 * 24 * 60 * 60 * 1000) // Calculate new date without modifying original
-              ),
-              end: endOfDay(new Date()),
-            }).map((date) => format(date, "yyyy-MM-dd"));
+            formattedStartDate = format(currentDate, "yyyy-MM-dd");
+            formattedEndDate = format(currentDate, "yyyy-MM-dd");
             break;
-
           case "weekly":
-            dateRange = eachWeekOfInterval({
-              start: startOfWeek(
-                new Date(currentDate.getTime() - 42 * 24 * 60 * 60 * 1000), // Calculate new date without modifying original
-                { weekStartsOn: 1 }
-              ),
-              end: endOfWeek(new Date(), { weekStartsOn: 1 }),
-            }).map((date) => ({
-              start: format(date, "yyyy-MM-dd"),
-              end: format(endOfWeek(date, { weekStartsOn: 1 }), "yyyy-MM-dd"),
-            }));
+            const startOfWeekDate = startOfWeek(currentDate, {
+              weekStartsOn: 1,
+            });
+            const endOfWeekDate = endOfWeek(currentDate, { weekStartsOn: 1 });
+            formattedStartDate = format(startOfWeekDate, "yyyy-MM-dd");
+            formattedEndDate = format(endOfWeekDate, "yyyy-MM-dd");
             break;
-
           default:
-            dateRange = eachMonthOfInterval({
-              start: startOfMonth(
-                new Date(
-                  currentDate.getFullYear(),
-                  currentDate.getMonth() - 5,
-                  1
-                )
-              ),
-              end: endOfMonth(currentDate),
-            }).map((date) => format(date, "yyyy-MM"));
+            formattedStartDate = format(startOfMonth(currentDate), "yyyy-MM");
+            formattedEndDate = format(endOfMonth(currentDate), "yyyy-MM");
         }
 
         const { data, error } = await supabase.rpc(
           "get_total_receivables_for_dashboard"
         );
 
-        if (error) {
-          console.error("Error fetching data:", error.message || error);
-          throw error;
-        }
+        if (error) throw error;
 
-        const totalReceivables = dateRange.reduce((acc, range) => {
-          const filteredData = data.filter((item) => {
-            const itemDate = new Date(item.schedule_date);
-
-            switch (selectedDateType) {
-              case "weekly":
-                return (
-                  item.schedule_date >= range.start &&
-                  item.schedule_date <= range.end &&
-                  item.city === selectedCity
-                );
-              case "daily":
-                return (
-                  format(itemDate, "yyyy-MM-dd") === range &&
-                  item.city === selectedCity
-                );
-              case "yearly":
-                return (
-                  format(itemDate, "yyyy") === range &&
-                  item.city === selectedCity
-                );
-              default:
-                return (
-                  format(itemDate, "yyyy-MM") === range &&
-                  item.city === selectedCity
-                );
-            }
-          });
+        const filteredData = data.filter((item) => {
+          const itemDate = new Date(item.schedule_date);
+          const formattedItemDate = format(
+            itemDate,
+            dateType === "yearly"
+              ? "yyyy"
+              : dateType === "monthly"
+              ? "yyyy-MM"
+              : "yyyy-MM-dd"
+          );
 
           return (
-            acc +
-            filteredData.reduce(
-              (sum, item) => sum + parseFloat(item.total_receivables || 0),
-              0
-            )
+            item.city === selectedCity &&
+            formattedItemDate >= formattedStartDate &&
+            formattedItemDate <= formattedEndDate
           );
-        }, 0);
+        });
 
-        setTotalReceivables(totalReceivables);
-      } catch (error) {
-        console.error(
-          "Error fetching total receivables:",
-          error.message || error
+        const sortedReceivables = filteredData.sort(
+          (a, b) => new Date(b.schedule_date) - new Date(a.schedule_date)
         );
-        setTotalReceivables(0); // Default to 0 in case of error
+
+        const formattedReceivables = sortedReceivables.map((receivable) => ({
+          junkshop: receivable.junkshop,
+          datetime: format(
+            parseISO(receivable.schedule_date),
+            "MMMM d, yyyy @ hh:mm a"
+          ),
+          total_receivables: receivable.total_receivables || 0,
+        }));
+
+        setTotalReceivables(formattedReceivables);
+      } catch (error) {
+        console.error("Error fetching total receivables:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -1085,12 +1045,23 @@ export default function Dashboard() {
                       <div className="flex items-end justify-between h-[85px]">
                         <p className="text-3xl font-semibold">
                           {(() => {
-                            const [integerPart, decimalPart] = totalReceivables
+                            // Calculate total receivables
+                            const total = Array.isArray(totalReceivables)
+                              ? totalReceivables.reduce(
+                                  (sum, item) =>
+                                    sum +
+                                    (parseFloat(item.total_receivables) || 0),
+                                  0
+                                )
+                              : 0;
+
+                            // Format the total
+                            const [integerPart, decimalPart] = total
                               .toFixed(2)
                               .split(".");
                             return (
                               <>
-                                ₱ {integerPart.toLocaleString()}
+                                ₱ {parseInt(integerPart).toLocaleString()}
                                 <span className="text-lg">.{decimalPart}</span>
                               </>
                             );
