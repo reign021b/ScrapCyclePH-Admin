@@ -62,7 +62,7 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
   const fetchBookings = async () => {
     try {
       const { data, error } = await supabase.rpc(
-        "get_sidebar_bookings_for_today"
+        "get_sidebar_bookings_for_today_v2"
       );
 
       if (error) {
@@ -258,9 +258,25 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
           </div>
         )}
 
+        <hr className="mt-5" />
         <div className="font-semibold m-3 text-black">
+          <span className="text-sm font-normal">Payment Method: </span>
+          {selectedBooking.payment_method}
+        </div>
+
+        {selectedBooking.gcash_number && (
+          <div className="font-semibold m-3 text-black">
+            <span className="text-sm font-normal">GCash Number: </span>
+            {selectedBooking.gcash_number}
+          </div>
+        )}
+
+        <div className="font-semibold m-3 text-black">
+          <span className="text-sm font-normal">Address: </span>{" "}
           {selectedBooking.address_name}
         </div>
+
+        <hr className="mt-5" />
 
         <div className="text-sm grid grid-cols-2 border-b w-full pb-3 m-2">
           <div className="font-bold m-3 text-black">
@@ -324,6 +340,21 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
             <li className="text-center text-gray-500">No items found.</li>
           )}
         </ul>
+
+        {selectedBooking.items.length === 0 && <hr className="mt-5" />}
+        {selectedBooking.commission && (
+          <div className="m-5 mx-32 text-sm text-black flex justify-between">
+            Commission:{" "}
+            <span className="font-semibold">{selectedBooking.commission}</span>
+          </div>
+        )}
+
+        {selectedBooking.booking_fee && (
+          <div className="m-5 mx-32 text-sm text-black flex justify-between">
+            Booking Fee:{" "}
+            <span className="font-semibold">{selectedBooking.booking_fee}</span>
+          </div>
+        )}
       </div>
     </div>
   );
