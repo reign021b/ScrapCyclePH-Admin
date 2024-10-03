@@ -355,7 +355,7 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
           </div>
         )}
 
-        {selectedBooking.booking_fee && (
+        {selectedBooking.booking_fee && selectedBooking.items.length > 0 && (
           <div className="m-5 mx-32 text-sm text-black flex justify-between">
             Booking Fee:{" "}
             <span className="font-semibold">{selectedBooking.booking_fee}</span>
