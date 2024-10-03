@@ -259,6 +259,12 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
         )}
 
         <hr className="mt-5" />
+
+        <div className="font-semibold m-3 text-black">
+          <span className="text-sm font-normal">Schedule Time: </span>
+          {selectedBooking.schedule_time}
+        </div>
+
         <div className="font-semibold m-3 text-black">
           <span className="text-sm font-normal">Payment Method: </span>
           {selectedBooking.payment_method}
