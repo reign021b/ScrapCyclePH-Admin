@@ -185,7 +185,7 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
           </button>
 
           {dropdownOpen === selectedBooking.id && (
-            <div className="absolute w-1/2 bg-white border rounded-lg shadow-lg mt-1 z-10">
+            <div className="absolute w-2/3 bg-white border rounded-lg shadow-lg mt-1 z-10 top-8 left-28">
               <ul>
                 {dropdownOptions.map((option) => (
                   <li
