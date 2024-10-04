@@ -6,7 +6,7 @@ import { supabase } from "@/utils/supabase/client";
 const fetchDailyBookingsSummary = async (city) => {
   try {
     const { data, error } = await supabase.rpc(
-      "get_booking_statistics_for_today",
+      "get_booking_statistics_for_today1",
       {
         city_name: city,
       }
@@ -149,7 +149,7 @@ const ActiveCollector = ({ activeCity, selectedDate, onLinerIdSelect }) => {
                   src={item.profile_picture || "/default-profile.png"}
                   width={80}
                   height={100}
-                  className="rounded-md mr-4"
+                  className="rounded-md mr-4 w-24"
                 />
                 <div className="flex-col flex-grow">
                   <p className="font-semibold">
