@@ -62,7 +62,7 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
   const fetchBookings = async () => {
     try {
       const { data, error } = await supabase.rpc(
-        "get_sidebar_bookings_for_today_v2"
+        "get_sidebar_bookings_for_today"
       );
 
       if (error) {
@@ -280,6 +280,11 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
         <div className="font-semibold m-3 text-black">
           <span className="text-sm font-normal">Address: </span>{" "}
           {selectedBooking.address_name}
+        </div>
+
+        <div className="font-semibold m-3 text-black">
+          <span className="text-sm font-normal">Coordinates: </span>{" "}
+          {selectedBooking.coordinates.replace(/{|}/g, "")}
         </div>
 
         <hr className="mt-5" />
