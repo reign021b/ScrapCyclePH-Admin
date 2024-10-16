@@ -146,7 +146,10 @@ const ActiveCollector = ({ activeCity, selectedDate, onLinerIdSelect }) => {
               <div className="flex mb-3">
                 <Image
                   alt={`Profile picture of ${item.liner_name}`}
-                  src={item.profile_picture || "/default-profile.png"}
+                  src={
+                    item.profile_picture ||
+                    "https://img.freepik.com/free-icon/user_318-644325.jpg"
+                  }
                   width={80}
                   height={100}
                   className="rounded-md mr-4 w-24"

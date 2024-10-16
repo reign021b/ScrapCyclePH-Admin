@@ -82,15 +82,16 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
     const mapping = {};
     let colorIndex = 0;
 
-    // Create a combined set of unique liner_ids and collector_ids
+    // Create a unique set of liner_ids and collector_ids separately
+    const uniqueLinerIds = new Set(bookings.map((booking) => booking.liner_id));
+    const uniqueCollectorIds = new Set(
+      collectorLocations.map((collector) => collector.collector_id)
+    );
+
+    // Merge the two sets and filter out undefined/null values
     const uniqueIds = [
-      ...new Set([
-        ...bookings.map((booking) => booking.liner_id),
-        ...collectorLocations.map((collector) => collector.collector_id),
-      ]),
-    ]
-      .filter((id) => id) // Filter out undefined or null values
-      .sort(); // Sort alphabetically
+      ...new Set([...uniqueLinerIds, ...uniqueCollectorIds].filter((id) => id)),
+    ].sort(); // Sort alphabetically
 
     // Assign colors to each unique ID
     uniqueIds.forEach((id) => {
@@ -214,25 +215,25 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
 
     if (booking.cancelled === true) {
       return createBookingIcon(
-        "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/cancelled-gif.gif",
-        [32, 32],
+        "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/bookings%20markers/cancelled-icon.png?t=2024-10-16T06%3A43%3A51.739Z",
+        [28, 39],
         shadowColor
       );
     } else if (booking.liner_id === null) {
       return createBookingIcon(
-        "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/assign-liner.gif",
-        [42, 40]
+        "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/bookings%20markers/unassigned-icon.png",
+        [28, 39]
       );
     } else if (booking.status === "true") {
       return createBookingIcon(
-        "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/completed-gif.gif",
-        [35, 40],
+        "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/bookings%20markers/completed-icon.png",
+        [28, 39],
         shadowColor
       );
     } else {
       return createBookingIcon(
-        "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/among-us-marker/pending-gif-2.gif",
-        [35, 38],
+        "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/bookings%20markers/pending-icon.png",
+        [28, 39],
         shadowColor
       );
     }
@@ -333,7 +334,6 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
             "https://alfljqjdwlomzepvepun.supabase.co/storage/v1/object/public/dashboard/CollectorTopIcon.png",
             [24, 24], // Top icon size
             5 // Y-offset of the top icon
-
           );
 
           return (

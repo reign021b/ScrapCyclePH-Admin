@@ -3,6 +3,9 @@ import { FaChevronDown, FaTimes } from "react-icons/fa";
 import { supabase } from "/utils/supabase/client";
 import ProfileImage from "./ProfileImage";
 import Image from "next/image";
+import DatePicker from "react-datepicker";
+import { IoMdCalendar } from "react-icons/io";
+import { format, endOfToday } from "date-fns";
 
 const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
   const [bookings, setBookings] = useState([]);
@@ -11,6 +14,24 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
   const [selectedLiners, setSelectedLiners] = useState({});
   const [assignedLiners, setAssignedLiners] = useState(new Map());
   const [dropdownOptions, setDropdownOptions] = useState([]);
+  const [startDate, setStartDate] = useState(new Date());
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const selectedBooking = bookings.find(
+      (booking) => booking.id === selectedBookingId
+    );
+    if (selectedBooking && selectedBooking.schedule_datetime) {
+      setStartDate(new Date(selectedBooking.schedule_datetime));
+    }
+  }, [selectedBookingId, bookings]);
+
+  const handleDateChange = (date) => {
+    if (date) {
+      setStartDate(date);
+      setIsOpen(false);
+    }
+  };
 
   useEffect(() => {
     fetchDropdownOptions(); // Initial fetch for dropdown options
@@ -62,7 +83,7 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
   const fetchBookings = async () => {
     try {
       const { data, error } = await supabase.rpc(
-        "get_sidebar_bookings_for_today"
+        "get_sidebar_bookings_for_today_v2"
       );
 
       if (error) {
@@ -263,6 +284,32 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
         <div className="font-semibold m-3 text-black">
           <span className="text-sm font-normal">Schedule Time: </span>
           {selectedBooking.schedule_time}
+        </div>
+
+        <div className="flex m-3 text-black items-center">
+          <span className="text-sm font-normal">Schedule Date: </span>
+          <div className="">
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="h-[42px] bg-white hover:bg-neutral-100 border border-gray-400 ml-3 px-4 py-2 rounded-md flex items-center"
+            >
+              <IoMdCalendar className="text-2xl" />
+              <p className="text-sm mx-2">
+                {format(startDate, "MMMM d, yyyy")}
+              </p>
+              <FaChevronDown className="text-xs" />
+            </button>
+            {isOpen && (
+              <div className="absolute z-10 mt-1 bg-white border border-gray-200 rounded-md shadow-lg">
+                <DatePicker
+                  selected={startDate}
+                  onChange={handleDateChange}
+                  inline
+                  dateFormat="MMMM d, yyyy"
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="font-semibold m-3 text-black">
