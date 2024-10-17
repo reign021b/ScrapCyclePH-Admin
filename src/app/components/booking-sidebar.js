@@ -117,7 +117,6 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
         // Update the database with the new date and existing time
         updateBookingInDatabase(selectedBookingId, formattedDate)
           .then(() => {
-            console.log("Booking updated successfully");
             handleClose();
           })
           .catch((error) => {
