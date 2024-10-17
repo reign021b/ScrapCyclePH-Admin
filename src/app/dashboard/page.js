@@ -831,17 +831,10 @@ export default function Dashboard() {
         )
       : 0;
 
-    console.log("Calculation values:", {
-      totalPaymentsNum,
-      totalReceivablesSum,
-    });
-
     const percentage =
       totalPaymentsNum > 0 || totalReceivablesSum > 0
         ? (totalPaymentsNum / (totalReceivablesSum + totalPaymentsNum)) * 100
         : 0;
-
-    console.log("Calculated paidPercentage:", percentage);
 
     return percentage;
   }, [totalPayments, totalReceivables]);
