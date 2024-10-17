@@ -26,8 +26,8 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
       (booking) => booking.id === selectedBookingId
     );
     if (selectedBooking) {
-      if (selectedBooking.schedule_datetime) {
-        setStartDate(new Date(selectedBooking.schedule_datetime));
+      if (selectedBooking.schedule) {
+        setStartDate(new Date(selectedBooking.schedule));
       }
       setNote(selectedBooking.notes || "");
       setIsEditing(!selectedBooking.notes);
@@ -74,9 +74,71 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
   }, [selectedBookingId, bookings]);
 
   const handleDateChange = (date) => {
-    if (date) {
-      setStartDate(date);
-      setIsOpen(false);
+    if (date && selectedBookingId) {
+      // Find the selected booking
+      const selectedBooking = bookings.find(
+        (booking) => booking.id === selectedBookingId
+      );
+
+      if (selectedBooking && selectedBooking.schedule_datetime) {
+        // Parse the existing datetime
+        const existingDate = new Date(selectedBooking.schedule_datetime);
+
+        // Create a new date object combining the new date with the existing time
+        const newDate = new Date(date);
+        newDate.setUTCHours(existingDate.getUTCHours());
+        newDate.setUTCMinutes(existingDate.getUTCMinutes());
+        newDate.setUTCSeconds(existingDate.getUTCSeconds());
+        newDate.setUTCMilliseconds(existingDate.getUTCMilliseconds());
+
+        // Format the new date to match your database format
+        const formattedDate = newDate.toISOString();
+
+        // Update the state
+        setStartDate(newDate);
+        setIsOpen(false);
+
+        // Update the database
+        updateBookingInDatabase(selectedBookingId, formattedDate)
+          .then(() => {
+            console.log("Booking updated successfully");
+            handleClose();
+          })
+          .catch((error) => {
+            console.error("Failed to update booking:", error);
+            // Handle the error (e.g., show an error message to the user)
+            alert("Failed to update booking. Please try again.");
+          });
+      } else {
+        console.error("Selected booking or schedule_datetime not found");
+      }
+    } else {
+      console.error("Date or selectedBookingId is missing");
+    }
+  };
+
+  const updateBookingInDatabase = async (bookingId, newDateTime) => {
+    const formattedDateTime = newDateTime.replace("T", " ").replace("Z", "");
+
+    try {
+      const { data, error } = await supabase
+        .from("bookings")
+        .update({ schedule: formattedDateTime })
+        .eq("id", bookingId)
+        .single();
+
+      if (error) throw error;
+
+      setBookings((prevBookings) =>
+        prevBookings.map((booking) =>
+          booking.id === bookingId ? { ...booking, ...data } : booking
+        )
+      );
+
+      return data;
+    } catch (error) {
+      console.error("Error updating booking:", error.message);
+      throw error;
     }
   };
 
