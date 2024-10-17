@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/utils/supabase/client";
 import AppBar from "/src/app/components/AppBar";
@@ -822,8 +822,29 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [router, selectedCity, startDate, selectedDateType]);
 
-  const paidPercentage =
-    (totalPayments / (totalReceivables + totalPayments)) * 100 || 0;
+  const paidPercentage = useMemo(() => {
+    const totalPaymentsNum = parseFloat(totalPayments) || 0;
+    const totalReceivablesSum = Array.isArray(totalReceivables)
+      ? totalReceivables.reduce(
+          (sum, item) => sum + (parseFloat(item.total_receivables) || 0),
+          0
+        )
+      : 0;
+
+    console.log("Calculation values:", {
+      totalPaymentsNum,
+      totalReceivablesSum,
+    });
+
+    const percentage =
+      totalPaymentsNum > 0 || totalReceivablesSum > 0
+        ? (totalPaymentsNum / (totalReceivablesSum + totalPaymentsNum)) * 100
+        : 0;
+
+    console.log("Calculated paidPercentage:", percentage);
+
+    return percentage;
+  }, [totalPayments, totalReceivables]);
 
   return (
     <main className="text-gray-700 bg-white h-screen">
@@ -1123,23 +1144,23 @@ export default function Dashboard() {
                     <div className="text-center">Amount</div>
                   </div>
                 </div>
-                <div className="grid grid-cols-4 border border-t-0 rounded-b-xl text-[11px] justify-center font-bold h-[564px] overflow-y-auto">
+                <div className="grid grid-cols-4 border border-t-0 rounded-b-xl text-[11px] justify-center font-bold max-h-[564px] overflow-y-auto pb-2">
                   {loading ? (
-                    <div className="col-span-3 text-center py-3">
+                    <div className="col-span-3 text-center py-2 h-[564px]">
                       Loading...
                     </div>
                   ) : recentPayments.length > 0 ? (
                     recentPayments.map((payment, index) => (
                       <React.Fragment key={index}>
-                        <div className="w-full col-span-1 py-3">
+                        <div className="w-full col-span-1 py-2">
                           <div className="pl-5">{payment.junkshop}</div>
                         </div>
-                        <div className="w-full col-span-2 py-3">
+                        <div className="w-full col-span-2 py-2">
                           <div className="text-center w-full">
                             {payment.datetime}
                           </div>
                         </div>
-                        <div className="w-full col-span-1 py-3">
+                        <div className="w-full col-span-1 py-2">
                           <div className="text-center">
                             ₱ {payment.total_amount.toFixed(2)}
                           </div>
@@ -1147,8 +1168,8 @@ export default function Dashboard() {
                       </React.Fragment>
                     ))
                   ) : (
-                    <div className="col-span-4 text-center py-3">
-                      No recent payments found.
+                    <div className="col-span-4 justify-center items-center text-center py-2 h-[554px]">
+                      <p>No recent payments found.</p>
                     </div>
                   )}
                 </div>
