@@ -817,7 +817,7 @@ export default function Dashboard() {
       fetchTotalPenalties();
       fetchTotalReceivables();
       fetchTotalRecentPayments();
-    }, 8000);
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [router, selectedCity, startDate, selectedDateType]);

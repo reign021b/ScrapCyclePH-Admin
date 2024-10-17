@@ -81,24 +81,40 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
       );
 
       if (selectedBooking && selectedBooking.schedule_datetime) {
-        // Parse the existing datetime
-        const existingDate = new Date(selectedBooking.schedule_datetime);
+        // Parse the existing schedule_datetime
+        let existingDate = new Date(selectedBooking.schedule_datetime);
 
-        // Create a new date object combining the new date with the existing time
-        const newDate = new Date(date);
-        newDate.setUTCHours(existingDate.getUTCHours());
-        newDate.setUTCMinutes(existingDate.getUTCMinutes());
-        newDate.setUTCSeconds(existingDate.getUTCSeconds());
-        newDate.setUTCMilliseconds(existingDate.getUTCMilliseconds());
+        // Add 8 hours to adjust for UTC+8
+        existingDate.setHours(existingDate.getHours() + 8);
 
-        // Format the new date to match your database format
-        const formattedDate = newDate.toISOString();
+        // Extract the time parts from the adjusted date
+        const hours = existingDate.getHours();
+        const minutes = existingDate.getMinutes();
+        const seconds = existingDate.getSeconds();
+        const milliseconds = existingDate.getMilliseconds();
+
+        // Create a new date object using the selected date with the adjusted time
+        const newDate = new Date(
+          date.getFullYear(), // Year from picked date
+          date.getMonth(), // Month from picked date
+          date.getDate(), // Day from picked date
+          hours, // Adjusted hours
+          minutes, // Adjusted minutes
+          seconds, // Adjusted seconds
+          milliseconds // Adjusted milliseconds
+        );
+
+        // Format the new date for the database (local time without timezone conversion)
+        const formattedDate = newDate
+          .toISOString()
+          .replace("T", " ")
+          .replace("Z", "");
 
         // Update the state
-        setStartDate(newDate);
+        setStartDate(newDate); // Set the new date for display
         setIsOpen(false);
 
-        // Update the database
+        // Update the database with the new date and existing time
         updateBookingInDatabase(selectedBookingId, formattedDate)
           .then(() => {
             console.log("Booking updated successfully");
@@ -106,7 +122,6 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
           })
           .catch((error) => {
             console.error("Failed to update booking:", error);
-            // Handle the error (e.g., show an error message to the user)
             alert("Failed to update booking. Please try again.");
           });
       } else {
@@ -118,12 +133,10 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
   };
 
   const updateBookingInDatabase = async (bookingId, newDateTime) => {
-    const formattedDateTime = newDateTime.replace("T", " ").replace("Z", "");
-
     try {
       const { data, error } = await supabase
         .from("bookings")
-        .update({ schedule: formattedDateTime })
+        .update({ schedule: newDateTime })
         .eq("id", bookingId)
         .single();
 
