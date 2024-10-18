@@ -484,6 +484,12 @@ const BookingSidebar = ({ activeCity, selectedBookingId, onClose }) => {
           <span className="text-sm font-normal">Address: </span>{" "}
           {selectedBooking.address_name}
         </div>
+        {selectedBooking.landmark && (
+          <div className="font-semibold m-3 text-black">
+            <span className="text-sm font-normal">Landmark: </span>{" "}
+            {selectedBooking.landmark}
+          </div>
+        )}
         <div className="font-semibold m-3 text-black">
           <span className="text-sm font-normal">Coordinates: </span>{" "}
           {selectedBooking.coordinates.replace(/{|}/g, "")}
