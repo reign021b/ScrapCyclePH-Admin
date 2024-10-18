@@ -261,12 +261,13 @@ const Map = ({ bookings = [], setSelectedBookingId, activeCity, linerId }) => {
         style={{ height: "100%", width: "100%" }}
         center={center}
         zoom={13}
-        scrollWheelZoom={false}
+        scrollWheelZoom={true}
         fullscreenControl={true} // Enable fullscreen control
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          maxZoom={22}
         />
         {filteredBookings.map((booking) => {
           const coordinatesString = booking.coordinates;
